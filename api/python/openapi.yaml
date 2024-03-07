@@ -1,0 +1,246 @@
+openapi: 3.0.1
+info:
+  version: 1.0.0
+  title: Airthings for Consumer API
+  description: The Airthings for Consumer API provides secure and authorized access for Airthings consumers to retrieve the latest data from their Airthings air quality monitors. Leveraging HTTPS and OAuth for enhanced security, this API empowers users to seamlessly access real-time information from their Airthings devices, gaining valuable insights into the air quality within their environments.
+  contact:
+    email: support@airthings.com
+externalDocs:
+  description: Find out more about consumerAPI
+  url: https://consumer-api-doc.airthings.com/
+servers:
+  - url: https://consumer-api.airthings.com/v1
+    description: Airthings for Consumer API (prod)
+
+paths:
+  /v1/accounts/{accountId}/sensors:
+    get:
+      summary: Get sensors for a set of devices
+      operationId: getMultipleSensors
+      parameters:
+        - $ref: '#/components/parameters/deviceSerialNumbers'
+        - $ref: '#/components/parameters/accountId'
+        - $ref: '#/components/parameters/pageNumber'
+        - $ref: '#/components/parameters/unit'
+      tags:
+        - Sensor
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+          headers:
+            X-RateLimit-Limit:
+              schema:
+                type: integer
+              description: Request limit per hour.
+            X-RateLimit-Remaining:
+              schema:
+                type: integer
+              description: The number of requests left for the time window.
+            X-RateLimit-Reset:
+              schema:
+                type: string
+                format: timestamp
+              description: The timestamp at which the current rate limit window resets.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SensorsResponse'
+                  hasNext:
+                    type: boolean
+                    description: True if next pages can be fetched, false otherwise.
+                  totalPages:
+                    type: integer
+        '429':
+          description: Rate limit exceeded
+          headers:
+            X-RateLimit-Retry-After:
+              schema:
+                type: string
+                format: timestamp
+              description: Number of seconds in which the current rate limit window resets.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/accounts/{accountId}/devices:
+    get:
+      summary: Get all devices connected to a user
+      operationId: getDevices
+      parameters:
+        - $ref: '#/components/parameters/accountId'
+      tags:
+        - Device
+      security:
+        - bearerAuth: [ ]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DevicesResponse'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/accounts:
+    get:
+      summary: List all accounts the current user is member of
+      operationId: getAccountsIds
+      tags:
+        - Accounts
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountsResponse'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/health:
+    get:
+      summary: Get the health of the API
+      operationId: getHealth
+      tags:
+        - Health
+      responses:
+        '200':
+          description: OK
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+          description: A message detailing the error encountered
+    SensorsResponse:
+      type: object
+      properties:
+        serialNumber:
+          type: string
+        sensors:
+          type: array
+          items:
+            $ref: '#/components/schemas/SensorResponse'
+        recorded:
+          type: string
+          nullable: true
+        batteryPercentage:
+          type: integer
+          nullable: true
+    SensorResponse:
+      type: object
+      nullable: true
+      properties:
+        sensorType:
+          type: string
+        value:
+          type: number
+          format: double
+        unit:
+          type: string
+    AccountsResponse:
+      type: object
+      properties:
+        accounts:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccountResponse'
+    AccountResponse:
+      type: object
+      properties:
+        id:
+          type: string
+    DevicesResponse:
+      type: object
+      properties:
+        devices:
+          type: array
+          items:
+            $ref: '#/components/schemas/DeviceResponse'
+    DeviceResponse:
+      type: object
+      properties:
+        serialNumber:
+          type: string
+        home:
+          type: string
+          nullable: true
+        name:
+          type: string
+        type:
+          type: string
+        sensors:
+          type: array
+          items:
+            type: string
+  parameters:
+    accountId:
+      name: accountId
+      in: path
+      required: true
+      description: The account ID associated with the user
+      schema:
+        type: string
+    deviceSerialNumbers:
+      name: sn
+      in: query
+      required: false
+      description: The serial numbers of the devices
+      schema:
+        type: array
+        items:
+          type: string
+      style: form
+      explode: true
+    pageNumber:
+      name: pageNumber
+      in: query
+      required: false
+      description: The number of a page (of 50 records) to fetch
+      schema:
+        type: integer
+        default: 1
+    unit:
+      name: unit
+      in: query
+      required: false
+      description: The units type sensors values will be returned in
+      schema:
+        type: string
+        enum:
+          - metric
+          - imperial
+        default: metric
