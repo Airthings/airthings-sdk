@@ -1,0 +1,31 @@
+name: terratest
+on: [pull_request]
+permissions:
+  id-token: write
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.17
+
+    - name: 'Setup SSH Key'
+      uses: webfactory/ssh-agent@v0.4.1
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+    - name: Setup Dependencies
+      working-directory: infra/test/
+      run:  go get -v -t -d && go mod tidy
+    - name: Configure AWS credentials for Playground account
+      uses: aws-actions/configure-aws-credentials@master
+      with:
+        role-to-assume: arn:aws:iam::215661016393:role/admin
+        aws-region: eu-north-1
+    - name: Test
+      working-directory: infra/test/
+      run: go test -v
