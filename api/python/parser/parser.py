@@ -44,8 +44,8 @@ class User:
     ):
         self.domain = domain
         self.sn = sn
-        self.client_id = client_id
-        self.client_secret = client_secret
+        self._client_id = client_id
+        self._client_secret = client_secret
         self.unit = unit
 
         self.access_token: Optional[str] = None
@@ -61,8 +61,8 @@ class User:
                 url=AUTH_URL,
                 data={
                     "grant_type": "client_credentials",
-                    "client_id": user.client_id,
-                    "client_secret": user.client_secret,
+                    "client_id": self._client_id,
+                    "client_secret": self._client_secret,
                 },
             )
             if access_token := auth_response.json()["access_token"]:
@@ -154,20 +154,24 @@ class Airthings:
             exit(1)
 
         with AuthenticatedClient(
-            base_url=user.domain,
+            base_url="https://consumer-api.airthings.com",
             timeout=10,
             verify_ssl=False,
-            token=user.access_token,
+            token=self._access_token,
         ) as client:
-            client.set_httpx_client(AsyncClient())
-            logging.debug("Client setup complete")
+            client.set_async_httpx_client(self._websession)
+            client.with_headers({"Authorization": f"Bearer {user.access_token}"})
+            logging.info("Client setup complete")
 
-            if accounts := self.fetch_accounts():
+            if accounts := self.fetch_accounts(client):
                 logging.info("Accounts found: %s", len(accounts.accounts))
                 for account in accounts.accounts:
                     logging.info("Account: %s", account)
 
-                    if devices := self.fetch_devices(account_id=account.id):
+                    if devices := self.fetch_devices(
+                        account_id=account.id,
+                        client=client
+                    ):
                         logging.info(
                             "%s devices found in account %s",
                             len(devices.devices), account.id
@@ -177,7 +181,7 @@ class Airthings:
                     while True:
                         all_sensors: List[SensorsResponse] = []
                         if sensors := self.fetch_sensors(
-                            account_id=account.id, unit=user.unit
+                            account_id=account.id, unit=user.unit, client=client
                         ):
                             logging.info(
                                 "%s sensors found in account %s",
@@ -201,7 +205,7 @@ class Airthings:
 
                     logger.info("Mapped devices: %s", mapped_devices)
 
-    def fetch_accounts():
+    def fetch_accounts(self, client: AuthenticatedClient):
         try:
             accounts_response = get_accounts_ids.sync_detailed(
                 client=client,
@@ -215,8 +219,15 @@ class Airthings:
         except TimeoutException as e:
             logging.error("Timeout while fetching accounts: %s", e)
             return None
+        except Exception as e:
+            logging.error("Error while fetching accounts: %s", e)
+            return None
 
-    def fetch_devices(account_id: str) -> Optional[List[DeviceResponse]]:
+    def fetch_devices(
+        self,
+        account_id: str,
+        client: AuthenticatedClient
+    ) -> Optional[List[DeviceResponse]]:
         try:
             sensors_response = get_devices.sync_detailed(
                 account_id=account_id,
@@ -236,6 +247,7 @@ class Airthings:
     def fetch_sensors(
         self,
         account_id: str,
+        client: AuthenticatedClient,
         page_number: int = 1,
         unit: Optional[GetMultipleSensorsUnit] = None,
     ) -> Optional[List[SensorsResponse]]:
@@ -264,11 +276,3 @@ class Airthings:
         except TimeoutException as e:
             logging.error("Timeout while fetching sensors: %s", e)
             return None
-
-
-if __name__ == "__main__":
-    Airthings(
-        client_id="client_id",
-        client_secret="client_secret",
-        websession=AsyncClient(),
-    ).fetch_data()
