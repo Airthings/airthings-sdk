@@ -1,10 +1,8 @@
 import logging
-import sys
 import time
 from dataclasses import dataclass, field
 from typing import List, Optional
 
-import coloredlogs
 from httpx import AsyncClient, Response, TimeoutException, request
 
 from airthings_for_consumer_api_client import AuthenticatedClient
@@ -17,10 +15,10 @@ from airthings_for_consumer_api_client.models.device_response import DeviceRespo
 from airthings_for_consumer_api_client.models.get_multiple_sensors_unit import GetMultipleSensorsUnit
 from airthings_for_consumer_api_client.models.sensor_response_type_0 import SensorResponseType0
 from airthings_for_consumer_api_client.models.sensors_response import SensorsResponse
-from const import AUTH_URL
+
+AUTH_URL = "https://accounts-api.airthings.com/v1/token"
 
 logger = logging.getLogger(__name__)
-coloredlogs.install(level="DEBUG")
 
 
 class RateLimitError(Exception):
@@ -83,13 +81,16 @@ class User:
 
 
 @dataclass
-class Sensor:
+class AirthingsSensor:
     sensor_type: str
     value: int | float
     unit: str
 
     @classmethod
-    def init_from_sensor_response(cls, sensor_response: SensorResponseType0) -> "Sensor":
+    def init_from_sensor_response(
+        cls,
+        sensor_response: SensorResponseType0
+    ) -> "AirthingsSensor":
         return cls(
             sensor_type=sensor_response.sensor_type,
             value=sensor_response.value,
@@ -98,29 +99,33 @@ class Sensor:
 
 
 @dataclass
-class Device:
+class AirthingsDevice:
     serial_number: str
     name: str
     home: str
     type: str
     recorded: Optional[str]
-    battery_level: Optional[int] = None
-    sensors: list[Sensor] = field(default_factory=list)
+    sensors: list[AirthingsSensor] = field(default_factory=list)
 
     @classmethod
     def init_from_device_response(
         cls,
         device_response: DeviceResponse,
         sensors_response: SensorsResponse
-    ) -> "Device":
+    ) -> "AirthingsDevice":
+        sensors = [AirthingsSensor.init_from_sensor_response(sensor) for sensor in sensors_response.sensors]
+        sensors.append(AirthingsSensor(
+            sensor_type="battery",
+            value=sensors_response.battery_percentage,
+            unit="%"
+        ))
         return cls(
             serial_number=device_response.serial_number,
             name=device_response.name,
             home=device_response.home,
             type=device_response.type,
             recorded=sensors_response.recorded,
-            battery_level=sensors_response.battery_percentage,
-            sensors=[Sensor.init_from_sensor_response(sensor) for sensor in sensors_response.sensors],
+            sensors=sensors,
         )
 
 
@@ -129,9 +134,9 @@ class Airthings:
     _client_id: str
     _client_secret: str
     _websession: AsyncClient
-    devices: List[Device]
+    devices: List[AirthingsDevice]
 
-    def __init__(self, client_id, client_secret, websession):
+    def __init__(self, client_id, client_secret, websession) -> 'Airthings':
         """Init Airthings data handler."""
         self._client_id = client_id
         self._client_secret = client_secret
@@ -139,7 +144,7 @@ class Airthings:
         self._access_token = None
         self._devices = {}
 
-    def fetch_data(self):
+    def update_devices(self) -> Optional[dict[str, AirthingsDevice]]:
         user = User(
             domain="https://accounts-api.airthings.com",
             sn="sn",
@@ -193,19 +198,20 @@ class Airthings:
                             if not sensors.has_next:
                                 break
 
-                    mapped_devices: List[DeviceResponse] = []
-
-                    # Add devices and sensors
+                    res = {}
                     for device in devices.devices:
                         for sensor in sensors.results:
                             if device.serial_number == sensor.serial_number:
-                                mapped_devices.append(
-                                    Device.init_from_device_response(device, sensor)
-                                )
+                                res[device.serial_number] = AirthingsDevice.init_from_device_response(device, sensor)
 
-                    logger.info("Mapped devices: %s", mapped_devices)
+                    logger.info("Mapped devices: %s", res)
+                    return res
+        return None
 
-    def fetch_accounts(self, client: AuthenticatedClient):
+    def fetch_accounts(
+        self,
+        client: AuthenticatedClient
+    ) -> Optional[get_accounts_ids.AccountsResponse]:
         try:
             accounts_response = get_accounts_ids.sync_detailed(
                 client=client,
