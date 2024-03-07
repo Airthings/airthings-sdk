@@ -5,16 +5,15 @@ from typing import List, Optional
 
 from httpx import AsyncClient, Response, TimeoutException, request
 
-from airthings_for_consumer_api_client import AuthenticatedClient
-from airthings_for_consumer_api_client.api.accounts import get_accounts_ids
-from airthings_for_consumer_api_client.api.device import get_devices
-from airthings_for_consumer_api_client.api.sensor import get_multiple_sensors
-from airthings_for_consumer_api_client.client import Client
-from airthings_for_consumer_api_client.errors import UnexpectedStatus
-from airthings_for_consumer_api_client.models.device_response import DeviceResponse
-from airthings_for_consumer_api_client.models.get_multiple_sensors_unit import GetMultipleSensorsUnit
-from airthings_for_consumer_api_client.models.sensor_response_type_0 import SensorResponseType0
-from airthings_for_consumer_api_client.models.sensors_response import SensorsResponse
+from airthings_api_client import AuthenticatedClient
+from airthings_api_client.api.accounts import get_accounts_ids
+from airthings_api_client.api.device import get_devices
+from airthings_api_client.api.sensor import get_multiple_sensors
+from airthings_api_client.errors import UnexpectedStatus
+from airthings_api_client.models.device_response import DeviceResponse
+from airthings_api_client.models.get_multiple_sensors_unit import GetMultipleSensorsUnit
+from airthings_api_client.models.sensor_response_type_0 import SensorResponseType0
+from airthings_api_client.models.sensors_response import SensorsResponse
 
 AUTH_URL = "https://accounts-api.airthings.com/v1/token"
 

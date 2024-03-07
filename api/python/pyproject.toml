@@ -1,13 +1,14 @@
 [tool.poetry]
-name = "airthings-for-consumer-api-client"
+name = "airthings-sdk"
 version = "1.0.0"
 description = "A client library for accessing Airthings for Consumer"
 authors = []
 readme = "README.md"
 packages = [
-    {include = "airthings_for_consumer_api_client"},
+    {include = "airthings_api_client"},
+    {include = "airthings_sdk"},
 ]
-include = ["CHANGELOG.md", "airthings_for_consumer_api_client/py.typed"]
+include = ["CHANGELOG.md", "api_client/py.typed"]
 
 
 [tool.poetry.dependencies]
