@@ -5,7 +5,7 @@ from typing import List, Optional
 
 from httpx import AsyncClient, Response, TimeoutException, request
 
-from airthings_api_client import AuthenticatedClient
+from airthings_api_client import Client
 from airthings_api_client.api.accounts import get_accounts_ids
 from airthings_api_client.api.device import get_devices
 from airthings_api_client.api.sensor import get_multiple_sensors
@@ -28,55 +28,6 @@ class RateLimitError(Exception):
         self.content = content
 
         super().__init__(f"Rate limit exceeded: {status_code} {content}")
-
-
-class User:
-    def __init__(
-        self,
-        domain: str,
-        sn: str,
-        client_id: str,
-        client_secret: str,
-        unit: GetMultipleSensorsUnit = GetMultipleSensorsUnit.METRIC,
-    ):
-        self.domain = domain
-        self.sn = sn
-        self._client_id = client_id
-        self._client_secret = client_secret
-        self.unit = unit
-
-        self.access_token: Optional[str] = None
-        self.expires: Optional[int] = None
-
-    def __str__(self):
-        return f"User(user_group={self.user_group})"
-
-    def authenticate(self):
-        try:
-            auth_response: Response = request(
-                method="POST",
-                url=AUTH_URL,
-                data={
-                    "grant_type": "client_credentials",
-                    "client_id": self._client_id,
-                    "client_secret": self._client_secret,
-                },
-            )
-            if access_token := auth_response.json()["access_token"]:
-                self.access_token = access_token
-            else:
-                raise ValueError("No access token found")
-
-            if expires := auth_response.json()["expires_in"]:
-                self.expires = int(time.time()) + expires
-            else:
-                raise ValueError("No expires_in found")
-
-            logger.info("Authenticated: %s", self.access_token)
-
-        except Exception as e:
-            logging.error("Error while authenticating: %s", e)
-            return None
 
 
 @dataclass
@@ -128,88 +79,142 @@ class AirthingsDevice:
         )
 
 
+class AirthingsToken:
+    _access_token: Optional[str]
+    _expires: Optional[int]
+
+    def __init__(
+        self,
+    ):
+        self._access_token = None
+        self._expires = None
+    
+    def set_token(self, access_token: str, expires_in: int):
+        self._access_token = access_token
+        self._expires = expires_in + int(time.time())
+    
+    def is_valid(self) -> bool:
+        return self._access_token and self._expires and self._expires > (int(time.time()) + 20)
+
+    def as_header(self) -> dict[str, str]:
+        return {"Authorization": f"Bearer {self._access_token}"}
+
+
 class Airthings:
     _access_token: Optional[str] = None
     _client_id: str
     _client_secret: str
-    _websession: AsyncClient
+    _unit: GetMultipleSensorsUnit
+    _websession: Optional[AsyncClient]
+    _access_token: AirthingsToken
     devices: List[AirthingsDevice]
 
-    def __init__(self, client_id, client_secret, websession) -> 'Airthings':
+    def __init__(
+        self,
+        client_id: str,
+        client_secret: str,
+        is_metric: bool,
+        websession: Optional[AsyncClient] = None,
+    ) -> 'Airthings':
         """Init Airthings data handler."""
         self._client_id = client_id
         self._client_secret = client_secret
+        self._unit = GetMultipleSensorsUnit.METRIC if is_metric else GetMultipleSensorsUnit.IMPERIAL
         self._websession = websession
-        self._access_token = None
+        self._access_token = AirthingsToken()
         self._devices = {}
 
+    def _authenticate(self):
+        with Client(
+            base_url="https://accounts-api.airthings.com",
+            timeout=10,
+        ) as client:
+            if websession := self._websession:
+                client.set_async_httpx_client(websession)
+            auth_response = client.get_httpx_client().request(
+                url=AUTH_URL,
+                method="POST",
+                data={
+                    "grant_type": "client_credentials",
+                    "client_id": self._client_id,
+                    "client_secret": self._client_secret,
+                },
+            )
+            if access_token := auth_response.json().get("access_token"):
+                self._access_token.set_token(
+                    access_token=access_token,
+                    expires=int(auth_response.json()["expires_in"]),
+                )
+            else:
+                raise ValueError("No access token found")
+
     def update_devices(self) -> Optional[dict[str, AirthingsDevice]]:
-        user = User(
-            domain="https://accounts-api.airthings.com",
-            sn="sn",
-            client_id=self._client_id,
-            client_secret=self._client_secret,
-        )
+        if not self._access_token.is_valid():
+            try:
+                self._authenticate()
+            except Exception as e:
+                logging.error("Error while authenticating: %s", e)
+                return None
 
-        try:
-            user.authenticate()
-        except Exception as e:
-            logging.error("Error while authenticating: %s", e)
-            exit(1)
-
-        with AuthenticatedClient(
+        with Client(
             base_url="https://consumer-api.airthings.com",
             timeout=10,
-            verify_ssl=False,
+            verify_ssl=True,
             token=self._access_token,
         ) as client:
-            client.set_async_httpx_client(self._websession)
-            client.with_headers({"Authorization": f"Bearer {user.access_token}"})
+            if websession := self._websession:
+                client.set_async_httpx_client(websession)
+            client.with_headers()
             logging.info("Client setup complete")
 
-            if accounts := self.fetch_accounts(client):
-                logging.info("Accounts found: %s", len(accounts.accounts))
-                for account in accounts.accounts:
-                    logging.info("Account: %s", account)
+            accounts = self.fetch_accounts(client)
+            if not accounts:
+                logging.error("No accounts found")
+                return None
 
-                    if devices := self.fetch_devices(
-                        account_id=account.id,
-                        client=client
-                    ):
-                        logging.info(
-                            "%s devices found in account %s",
-                            len(devices.devices), account.id
-                        )
-                        logging.info("Devices: %s", devices)
+            logging.info("Accounts found: %s", len(accounts.accounts))
+            for account in accounts.accounts:
+                logging.info("Account: %s", account)
 
-                    while True:
-                        all_sensors: List[SensorsResponse] = []
-                        if sensors := self.fetch_sensors(
-                            account_id=account.id, unit=user.unit, client=client
-                        ):
-                            logging.info(
-                                "%s sensors found in account %s",
-                                len(sensors.results), account.id
-                            )
-                            logging.info("Sensors: %s,", sensors.results)
-                            all_sensors.extend(sensors.results)
-                            logging.info("Pages: %s", sensors.total_pages)
-                            if not sensors.has_next:
-                                break
+                devices = self.fetch_devices(
+                    account_id=account.id,
+                    client=client
+                )
+                if not devices:
+                    logging.error("No devices found in account %s", account.id)
+                    continue
 
-                    res = {}
-                    for device in devices.devices:
-                        for sensor in sensors.results:
-                            if device.serial_number == sensor.serial_number:
-                                res[device.serial_number] = AirthingsDevice.init_from_device_response(device, sensor)
+                logging.info(
+                    "%s devices found in account %s",
+                    len(devices.devices), account.id
+                )
+                logging.info("Devices: %s", devices)
 
-                    logger.info("Mapped devices: %s", res)
-                    return res
-        return None
+                sensors = self.fetch_sensors(
+                    account_id=account.id, unit=self._unit, client=client
+                )
+                if not sensors:
+                    logging.error("No sensors found in account %s", account.id)
+                    break
+                logging.info(
+                    "%s sensors found in account %s",
+                    len(sensors.results), account.id
+                )
+                logging.info("Sensors: %s,", sensors.results)
+                logging.info("Pages: %s", sensors.total_pages)
+
+            res = {}
+            for device in devices.devices:
+                for sensor in sensors.results:
+                    if device.serial_number == sensor.serial_number:
+                        res[device.serial_number] = AirthingsDevice.init_from_device_response(device, sensor)
+
+            logger.info("Mapped devices: %s", res)
+            return res
 
     def fetch_accounts(
         self,
-        client: AuthenticatedClient
+        client: Client
     ) -> Optional[get_accounts_ids.AccountsResponse]:
         try:
             accounts_response = get_accounts_ids.sync_detailed(
@@ -231,7 +236,7 @@ class Airthings:
     def fetch_devices(
         self,
         account_id: str,
-        client: AuthenticatedClient
+        client: Client
     ) -> Optional[List[DeviceResponse]]:
         try:
             sensors_response = get_devices.sync_detailed(
@@ -252,7 +257,7 @@ class Airthings:
     def fetch_sensors(
         self,
         account_id: str,
-        client: AuthenticatedClient,
+        client: Client,
         page_number: int = 1,
         unit: Optional[GetMultipleSensorsUnit] = None,
     ) -> Optional[List[SensorsResponse]]:
