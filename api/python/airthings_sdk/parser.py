@@ -1,9 +1,11 @@
+"""Airthings API data handler."""
+
 import logging
 import time
 from dataclasses import dataclass, field
 from typing import List, Optional
 
-from httpx import AsyncClient, Response, TimeoutException, request
+from httpx import AsyncClient, TimeoutException
 
 from airthings_api_client import Client
 from airthings_api_client.api.accounts import get_accounts_ids
@@ -32,15 +34,17 @@ class RateLimitError(Exception):
 
 @dataclass
 class AirthingsSensor:
+    """Representation of Airthings device sensor."""
+
     sensor_type: str
     value: int | float
     unit: str
 
     @classmethod
     def init_from_sensor_response(
-        cls,
-        sensor_response: SensorResponseType0
+        cls, sensor_response: SensorResponseType0
     ) -> "AirthingsSensor":
+        """Create an AirthingsSensor from a SensorResponseType0"""
         return cls(
             sensor_type=sensor_response.sensor_type,
             value=sensor_response.value,
@@ -50,6 +54,8 @@ class AirthingsSensor:
 
 @dataclass
 class AirthingsDevice:
+    """Representation of an Airthings device"""
+
     serial_number: str
     name: str
     home: str
@@ -59,16 +65,20 @@ class AirthingsDevice:
 
     @classmethod
     def init_from_device_response(
-        cls,
-        device_response: DeviceResponse,
-        sensors_response: SensorsResponse
+        cls, device_response: DeviceResponse, sensors_response: SensorsResponse
     ) -> "AirthingsDevice":
-        sensors = [AirthingsSensor.init_from_sensor_response(sensor) for sensor in sensors_response.sensors]
-        sensors.append(AirthingsSensor(
-            sensor_type="battery",
-            value=sensors_response.battery_percentage,
-            unit="%"
-        ))
+        """Create an AirthingsDevice from a DeviceResponse and a SensorsResponse"""
+        sensors = [
+            AirthingsSensor.init_from_sensor_response(sensor)
+            for sensor in sensors_response.sensors
+        ]
+        sensors.append(
+            AirthingsSensor(
+                sensor_type="battery",
+                value=sensors_response.battery_percentage,
+                unit="%",
+            )
+        )
         return cls(
             serial_number=device_response.serial_number,
             name=device_response.name,
@@ -80,6 +90,8 @@ class AirthingsDevice:
 
 
 class AirthingsToken:
+    """Representation of an Airthings API token."""
+
     _access_token: Optional[str]
     _expires: Optional[int]
 
@@ -88,19 +100,28 @@ class AirthingsToken:
     ):
         self._access_token = None
         self._expires = None
-    
+
     def set_token(self, access_token: str, expires_in: int):
+        """Set the token and its expiration time."""
         self._access_token = access_token
         self._expires = expires_in + int(time.time())
-    
+
     def is_valid(self) -> bool:
-        return self._access_token and self._expires and self._expires > (int(time.time()) + 20)
+        """Check if the token is valid."""
+        return (
+            self._access_token
+            and self._expires
+            and self._expires > (int(time.time()) + 20)
+        )
 
     def as_header(self) -> dict[str, str]:
+        """Return the token as a header."""
         return {"Authorization": f"Bearer {self._access_token}"}
 
 
 class Airthings:
+    """Representation of Airthings API data handler."""
+
     _access_token: Optional[str] = None
     _client_id: str
     _client_secret: str
@@ -115,11 +136,15 @@ class Airthings:
         client_secret: str,
         is_metric: bool,
         websession: Optional[AsyncClient] = None,
-    ) -> 'Airthings':
+    ) -> "Airthings":
         """Init Airthings data handler."""
         self._client_id = client_id
         self._client_secret = client_secret
-        self._unit = GetMultipleSensorsUnit.METRIC if is_metric else GetMultipleSensorsUnit.IMPERIAL
+        self._unit = (
+            GetMultipleSensorsUnit.METRIC
+            if is_metric
+            else GetMultipleSensorsUnit.IMPERIAL
+        )
         self._websession = websession
         self._access_token = AirthingsToken()
         self._devices = {}
@@ -127,7 +152,7 @@ class Airthings:
     def _authenticate(self):
         with Client(
             base_url="https://accounts-api.airthings.com",
-            timeout=10,
+            # timeout=10,
         ) as client:
             if websession := self._websession:
                 client.set_async_httpx_client(websession)
@@ -143,16 +168,17 @@ class Airthings:
             if access_token := auth_response.json().get("access_token"):
                 self._access_token.set_token(
                     access_token=access_token,
-                    expires=int(auth_response.json()["expires_in"]),
+                    expires_in=int(auth_response.json()["expires_in"]),
                 )
             else:
                 raise ValueError("No access token found")
 
     def update_devices(self) -> Optional[dict[str, AirthingsDevice]]:
+        """Update devices and sensors from Airthings API. Return a dict of devices."""
         if not self._access_token.is_valid():
             try:
                 self._authenticate()
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-except
                 logging.error("Error while authenticating: %s", e)
                 return None
 
@@ -164,7 +190,7 @@ class Airthings:
         ) as client:
             if websession := self._websession:
                 client.set_async_httpx_client(websession)
-            client.with_headers()
+            client.with_headers(self._access_token.as_header())
             logging.info("Client setup complete")
 
             accounts = self.fetch_accounts(client)
@@ -176,17 +202,13 @@ class Airthings:
             for account in accounts.accounts:
                 logging.info("Account: %s", account)
 
-                devices = self.fetch_devices(
-                    account_id=account.id,
-                    client=client
-                )
+                devices = self.fetch_devices(account_id=account.id, client=client)
                 if not devices:
                     logging.error("No devices found in account %s", account.id)
                     continue
 
                 logging.info(
-                    "%s devices found in account %s",
-                    len(devices.devices), account.id
+                    "%s devices found in account %s", len(devices.devices), account.id
                 )
                 logging.info("Devices: %s", devices)
 
@@ -197,8 +219,7 @@ class Airthings:
                     logging.error("No sensors found in account %s", account.id)
                     break
                 logging.info(
-                    "%s sensors found in account %s",
-                    len(sensors.results), account.id
+                    "%s sensors found in account %s", len(sensors.results), account.id
                 )
                 logging.info("Sensors: %s,", sensors.results)
                 logging.info("Pages: %s", sensors.total_pages)
@@ -207,15 +228,17 @@ class Airthings:
             for device in devices.devices:
                 for sensor in sensors.results:
                     if device.serial_number == sensor.serial_number:
-                        res[device.serial_number] = AirthingsDevice.init_from_device_response(device, sensor)
+                        res[device.serial_number] = (
+                            AirthingsDevice.init_from_device_response(device, sensor)
+                        )
 
             logger.info("Mapped devices: %s", res)
             return res
 
     def fetch_accounts(
-        self,
-        client: Client
+        self, client: Client
     ) -> Optional[get_accounts_ids.AccountsResponse]:
+        """Fetch accounts for the given client"""
         try:
             accounts_response = get_accounts_ids.sync_detailed(
                 client=client,
@@ -229,15 +252,14 @@ class Airthings:
         except TimeoutException as e:
             logging.error("Timeout while fetching accounts: %s", e)
             return None
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             logging.error("Error while fetching accounts: %s", e)
             return None
 
     def fetch_devices(
-        self,
-        account_id: str,
-        client: Client
+        self, account_id: str, client: Client
     ) -> Optional[List[DeviceResponse]]:
+        """Fetch devices for a given account"""
         try:
             sensors_response = get_devices.sync_detailed(
                 account_id=account_id,
@@ -261,6 +283,7 @@ class Airthings:
         page_number: int = 1,
         unit: Optional[GetMultipleSensorsUnit] = None,
     ) -> Optional[List[SensorsResponse]]:
+        """Fetch sensors for a given account"""
         try:
             sensors_response = get_multiple_sensors.sync_detailed(
                 account_id=account_id,
@@ -269,14 +292,13 @@ class Airthings:
                 unit=unit,
             )
 
-            sensors_response.parsed.results
-
             if sensors := sensors_response.parsed:
                 if sensors.has_next:
                     return self.fetch_sensors(
                         account_id=account_id,
                         page_number=page_number + 1,
-                        unit=unit
+                        unit=unit,
+                        client=client,
                     )
                 return sensors
             return None

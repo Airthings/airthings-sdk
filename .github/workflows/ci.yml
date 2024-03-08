@@ -1,0 +1,32 @@
+name: CI
+
+on: pull_request
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    name: Lint Python API SDK
+    defaults:
+        run:
+          working-directory: api/python
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.12
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+
+      - name: Install dependencies
+        run: poetry install
+
+      - name: Check formatting
+        run: poetry run black --check airthings_sdk
+
+      - name: Check code style
+        run: poetry run pylint airthings_sdk
+
