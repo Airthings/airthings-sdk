@@ -12,6 +12,7 @@ from airthings_api_client.api.accounts import get_accounts_ids
 from airthings_api_client.api.device import get_devices
 from airthings_api_client.api.sensor import get_multiple_sensors
 from airthings_api_client.errors import UnexpectedStatus
+from airthings_api_client.models import Error, AccountResponse
 from airthings_api_client.models.device_response import DeviceResponse
 from airthings_api_client.models.get_multiple_sensors_unit import GetMultipleSensorsUnit
 from airthings_api_client.models.sensor_response_type_0 import SensorResponseType0
@@ -184,49 +185,41 @@ class Airthings:
 
         with Client(
             base_url="https://consumer-api.airthings.com",
-            timeout=10,
+            # timeout=10,
             verify_ssl=True,
-            token=self._access_token,
         ) as client:
             if websession := self._websession:
                 client.set_async_httpx_client(websession)
             client.with_headers(self._access_token.as_header())
             logging.info("Client setup complete")
 
-            accounts = self.fetch_accounts(client)
+            accounts = self.fetch_all_accounts(client)
             if not accounts:
                 logging.error("No accounts found")
                 return None
 
-            logging.info("Accounts found: %s", len(accounts.accounts))
-            for account in accounts.accounts:
+            logging.info("Accounts found: %s", len(accounts))
+            for account in accounts:
                 logging.info("Account: %s", account)
 
-                devices = self.fetch_devices(account_id=account.id, client=client)
-                if not devices:
-                    logging.error("No devices found in account %s", account.id)
-                    continue
+                devices = self.fetch_all_devices(account_id=account.id, client=client)
 
-                logging.info(
-                    "%s devices found in account %s", len(devices.devices), account.id
-                )
+                logging.info("%s devices found in account %s", len(devices), account.id)
                 logging.info("Devices: %s", devices)
 
-                sensors = self.fetch_sensors(
+                sensors = self.fetch_all_device_sensors(
                     account_id=account.id, unit=self._unit, client=client
                 )
                 if not sensors:
                     logging.error("No sensors found in account %s", account.id)
                     break
-                logging.info(
-                    "%s sensors found in account %s", len(sensors.results), account.id
-                )
-                logging.info("Sensors: %s,", sensors.results)
-                logging.info("Pages: %s", sensors.total_pages)
+                logging.info("%s sensors found in account %s", len(sensors), account.id)
+                logging.info("Sensors: %s,", sensors)
+                logging.info("Pages: %s", sensors)
 
             res = {}
-            for device in devices.devices:
-                for sensor in sensors.results:
+            for device in devices:
+                for sensor in sensors:
                     if device.serial_number == sensor.serial_number:
                         res[device.serial_number] = (
                             AirthingsDevice.init_from_device_response(device, sensor)
@@ -235,30 +228,30 @@ class Airthings:
             logger.info("Mapped devices: %s", res)
             return res
 
-    def fetch_accounts(
+    def fetch_all_accounts(
         self, client: Client
-    ) -> Optional[get_accounts_ids.AccountsResponse]:
+    ) -> List[AccountResponse]:
         """Fetch accounts for the given client"""
         try:
             accounts_response = get_accounts_ids.sync_detailed(
                 client=client,
             )
             if accounts := accounts_response.parsed:
-                return accounts
-            return None
+                return accounts.accounts
+            return []
         except UnexpectedStatus as e:
             logging.error("Unexpected status while fetching accounts: %s", e)
-            return None
+            return []
         except TimeoutException as e:
             logging.error("Timeout while fetching accounts: %s", e)
-            return None
+            return []
         except Exception as e:  # pylint: disable=broad-except
             logging.error("Error while fetching accounts: %s", e)
-            return None
+            return []
 
-    def fetch_devices(
+    def fetch_all_devices(
         self, account_id: str, client: Client
-    ) -> Optional[List[DeviceResponse]]:
+    ) -> List[DeviceResponse]:
         """Fetch devices for a given account"""
         try:
             sensors_response = get_devices.sync_detailed(
@@ -266,23 +259,21 @@ class Airthings:
                 client=client,
             )
             logger.info("Device headers: %s", sensors_response.headers)
-            if sensors := sensors_response.parsed:
-                return sensors
-            return None
+            return sensors_response.parsed.devices
         except UnexpectedStatus as e:
             logging.error("Unexpected status while fetching devices: %s", e)
-            return None
+            return []
         except TimeoutException as e:
             logging.error("Timeout while fetching devices: %s", e)
-            return None
+            return []
 
-    def fetch_sensors(
+    def fetch_all_device_sensors(
         self,
         account_id: str,
         client: Client,
         page_number: int = 1,
         unit: Optional[GetMultipleSensorsUnit] = None,
-    ) -> Optional[List[SensorsResponse]]:
+    ) -> List[SensorsResponse]:
         """Fetch sensors for a given account"""
         try:
             sensors_response = get_multiple_sensors.sync_detailed(
@@ -290,21 +281,25 @@ class Airthings:
                 client=client,
                 page_number=page_number,
                 unit=unit,
-            )
+            ).parsed
 
-            if sensors := sensors_response.parsed:
-                if sensors.has_next:
-                    return self.fetch_sensors(
-                        account_id=account_id,
-                        page_number=page_number + 1,
-                        unit=unit,
-                        client=client,
-                    )
-                return sensors
-            return None
+            if sensors_response is Error or sensors_response is None:
+                return []
+
+            device_sensors = sensors_response.results
+
+            if sensors_response.has_next is False:
+                return device_sensors
+
+            return device_sensors + self.fetch_all_device_sensors(
+                account_id=account_id,
+                page_number=page_number + 1,
+                unit=unit,
+                client=client,
+            )
         except UnexpectedStatus as e:
             logging.error("Unexpected status while fetching sensors: %s", e)
-            return None
+            return []
         except TimeoutException as e:
             logging.error("Timeout while fetching sensors: %s", e)
-            return None
+            return []
