@@ -25,10 +25,10 @@ jobs:
         run: poetry install
 
       - name: Check formatting
-        run: poetry run black --check airthings_sdk
+        run: poetry run black --check airthings_sdk examples
 
       - name: Check code style
-        run: poetry run pylint airthings_sdk
+        run: poetry run pylint airthings_sdk examples
 
       - name: Check types
-        run: poetry run mypy airthings_sdk
+        run: poetry run mypy airthings_sdk examples

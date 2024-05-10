@@ -1,6 +1,7 @@
 """ Example of fetching devices and sensors from Airthings API. """
 
 import sys
+
 from airthings_sdk import Airthings
 
 if __name__ == "__main__":
