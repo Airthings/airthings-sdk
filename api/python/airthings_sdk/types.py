@@ -2,6 +2,7 @@
 
 import time
 from dataclasses import dataclass, field
+from enum import Enum
 from typing import Optional, cast
 
 from airthings_api_client.models import (
@@ -11,6 +12,54 @@ from airthings_api_client.models import (
 )
 from airthings_api_client.types import Unset
 
+
+class AirthingsDeviceType(str, Enum):
+    """Airthings device types."""
+
+    VIEW_PLUS = "VIEW_PLUS"
+    VIEW_RADON = "VIEW_RADON"
+    VIEW_POLLUTION = "VIEW_POLLUTION"
+    WAVE = "WAVE"
+    WAVE_PLUS = "WAVE_PLUS"
+    WAVE_MINI = "WAVE_MINI"
+    WAVE_RADON = "WAVE_GEN2"
+    HUB = "HUB"
+    AP_1 = "AP_1"
+    UNKNOWN = "UNKNOWN"
+
+    @classmethod
+    def from_raw_value(cls, value: str) -> "AirthingsDeviceType":
+        """Get device type from raw value."""
+        for device_type in cls:
+            if device_type.value == value:
+                device_type.raw_value = value
+                return device_type
+        unknown_device = AirthingsDeviceType.UNKNOWN
+        unknown_device.raw_value = value
+        return unknown_device
+
+    @property
+    def product_name(self) -> str:
+        if self == AirthingsDeviceType.VIEW_PLUS:
+            return "View Plus"
+        if self == AirthingsDeviceType.VIEW_RADON:
+            return "View Radon"
+        if self == AirthingsDeviceType.VIEW_POLLUTION:
+            return "View Pollution"
+        if self == AirthingsDeviceType.WAVE:
+            return "Wave Gen 1"
+        if self == AirthingsDeviceType.WAVE_PLUS:
+            return "Wave Plus"
+        if self == AirthingsDeviceType.WAVE_MINI:
+            return "Wave Mini"
+        if self == AirthingsDeviceType.WAVE_RADON:
+            return "Wave Radon"
+        if self == AirthingsDeviceType.HUB:
+            return "Hub"
+        if self == AirthingsDeviceType.AP_1:
+            return "Renew"
+        return "Unknown"
+    
 
 @dataclass
 class AirthingsSensor:
@@ -39,7 +88,7 @@ class AirthingsDevice:
     """Representation of an Airthings device"""
 
     serial_number: str
-    type: str
+    type: AirthingsDeviceType
     name: str
     home: Optional[str]
     recorded: Optional[str]
@@ -63,7 +112,7 @@ class AirthingsDevice:
         return cls(
             serial_number=cast(str, device_response.serial_number),
             name=cast(str, device_response.name),
-            type=cast(str, device_response.type),
+            type=AirthingsDeviceType.from_raw_value(cast(str, device_response.type)),
             home=cast(str | None, device_response.home),
             recorded=cast(str | None, sensors_response.recorded),
             sensors=filtered,
