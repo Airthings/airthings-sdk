@@ -167,12 +167,15 @@ class Airthings:
         page_number: int = 1,
     ) -> List[SensorsResponse]:
         """Fetch sensors for a given account"""
-        response = await get_multiple_sensors.asyncio_detailed(
-            account_id=account_id,
-            client=self._api_client,
-            page_number=page_number,
-            unit=unit,
-        )
+        try:
+            response = await get_multiple_sensors.asyncio_detailed(
+                account_id=account_id,
+                client=self._api_client,
+                page_number=page_number,
+                unit=unit,
+            )
+        except LibUnexpectedStatus as e:
+            raise UnexpectedStatusError(e.status_code, e.content) from e
 
         payload = response.parsed
 
@@ -187,7 +190,7 @@ class Airthings:
         if payload.has_next is not True:
             return sensors
 
-        return sensors + self._fetch_all_device_sensors(
+        return sensors + await self._fetch_all_device_sensors(
             account_id=account_id,
             page_number=page_number + 1,
             unit=unit,
