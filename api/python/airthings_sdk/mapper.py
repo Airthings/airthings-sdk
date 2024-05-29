@@ -20,7 +20,7 @@ from airthings_api_client.models.sensors_response import SensorsResponse
 from airthings_api_client.types import Unset
 from airthings_sdk.const import API_URL, AUTH_URL
 from airthings_sdk.errors import ApiError, UnexpectedPayloadError, UnexpectedStatusError
-from airthings_sdk.types import AirthingsDevice, AirthingsToken
+from airthings_sdk.types import AirthingsDevice, AirthingsDeviceType, AirthingsToken
 
 logger = logging.getLogger(__name__)
 
@@ -117,8 +117,12 @@ class Airthings:
 
                     sensor_device = device_map.get(serial_number)
                     if sensor_device is None:
+                        logger.debug("%s not found in devices list.", serial_number)
                         continue
                     mapped = AirthingsDevice.from_response(sensor_device, sensor)
+                    if mapped.type == AirthingsDeviceType.HUB:
+                        logger.debug("Skipping Hub %s.", serial_number)
+                        continue
                     res[serial_number] = mapped
 
             self.devices = res
