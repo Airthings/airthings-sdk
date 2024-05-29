@@ -51,6 +51,9 @@ def sync_detailed(
 ) -> Response[DevicesResponse]:
     """Get all devices connected to a user
 
+     List all devices (and their sensor abilities) connected to a user’s account. The data returned by
+    this endpoint changes when a device is registered, unregistered or renamed.
+
     Args:
         account_id (str):
 
@@ -80,6 +83,9 @@ def sync(
 ) -> Optional[DevicesResponse]:
     """Get all devices connected to a user
 
+     List all devices (and their sensor abilities) connected to a user’s account. The data returned by
+    this endpoint changes when a device is registered, unregistered or renamed.
+
     Args:
         account_id (str):
 
@@ -103,6 +109,9 @@ async def asyncio_detailed(
     client: AuthenticatedClient,
 ) -> Response[DevicesResponse]:
     """Get all devices connected to a user
+
+     List all devices (and their sensor abilities) connected to a user’s account. The data returned by
+    this endpoint changes when a device is registered, unregistered or renamed.
 
     Args:
         account_id (str):
@@ -130,6 +139,9 @@ async def asyncio(
     client: AuthenticatedClient,
 ) -> Optional[DevicesResponse]:
     """Get all devices connected to a user
+
+     List all devices (and their sensor abilities) connected to a user’s account. The data returned by
+    this endpoint changes when a device is registered, unregistered or renamed.
 
     Args:
         account_id (str):

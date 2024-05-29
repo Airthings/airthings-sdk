@@ -1,4 +1,4 @@
-""" Contains all the data models used in inputs/outputs """
+"""Contains all the data models used in inputs/outputs"""
 
 from .account_response import AccountResponse
 from .accounts_response import AccountsResponse

@@ -1,4 +1,5 @@
-""" A client library for accessing Airthings for Consumer API """
+"""A client library for accessing Airthings for Consumer API"""
+
 from .client import AuthenticatedClient, Client
 
 __all__ = (

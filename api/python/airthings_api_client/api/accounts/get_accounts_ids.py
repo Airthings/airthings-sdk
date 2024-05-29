@@ -48,6 +48,11 @@ def sync_detailed(
 ) -> Response[AccountsResponse]:
     """List all accounts the current user is member of
 
+     Lists all accounts the current user is member of. The data returned by this endpoint changes when a
+    user is added or removed from business accounts. It is safe to assume that the accountId remains
+    constant for Consumer users. The accountId returned by this endpoint is used to fetch the devices
+    and sensors from the other endpoints.
+
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
@@ -71,6 +76,11 @@ def sync(
 ) -> Optional[AccountsResponse]:
     """List all accounts the current user is member of
 
+     Lists all accounts the current user is member of. The data returned by this endpoint changes when a
+    user is added or removed from business accounts. It is safe to assume that the accountId remains
+    constant for Consumer users. The accountId returned by this endpoint is used to fetch the devices
+    and sensors from the other endpoints.
+
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
@@ -89,6 +99,11 @@ async def asyncio_detailed(
     client: Union[AuthenticatedClient, Client],
 ) -> Response[AccountsResponse]:
     """List all accounts the current user is member of
+
+     Lists all accounts the current user is member of. The data returned by this endpoint changes when a
+    user is added or removed from business accounts. It is safe to assume that the accountId remains
+    constant for Consumer users. The accountId returned by this endpoint is used to fetch the devices
+    and sensors from the other endpoints.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -110,6 +125,11 @@ async def asyncio(
     client: Union[AuthenticatedClient, Client],
 ) -> Optional[AccountsResponse]:
     """List all accounts the current user is member of
+
+     Lists all accounts the current user is member of. The data returned by this endpoint changes when a
+    user is added or removed from business accounts. It is safe to assume that the accountId remains
+    constant for Consumer users. The accountId returned by this endpoint is used to fetch the devices
+    and sensors from the other endpoints.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.

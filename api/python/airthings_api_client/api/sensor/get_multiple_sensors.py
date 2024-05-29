@@ -83,6 +83,12 @@ def sync_detailed(
 ) -> Response[Union[Error, GetMultipleSensorsResponse200]]:
     """Get sensors for a set of devices
 
+     Get sensors for a set of devices. The response will contain the latest sensor values for the
+    devices.
+    The sensor values are updated depending on the device types sampling rate.
+    It is recommended to poll the API at a regular interval to get the latest sensor values.
+    The response will be paginated with a maximum of 50 records per page.
+
     Args:
         account_id (str):
         sn (Union[Unset, List[str]]):
@@ -121,6 +127,12 @@ def sync(
 ) -> Optional[Union[Error, GetMultipleSensorsResponse200]]:
     """Get sensors for a set of devices
 
+     Get sensors for a set of devices. The response will contain the latest sensor values for the
+    devices.
+    The sensor values are updated depending on the device types sampling rate.
+    It is recommended to poll the API at a regular interval to get the latest sensor values.
+    The response will be paginated with a maximum of 50 records per page.
+
     Args:
         account_id (str):
         sn (Union[Unset, List[str]]):
@@ -153,6 +165,12 @@ async def asyncio_detailed(
     unit: Union[Unset, GetMultipleSensorsUnit] = GetMultipleSensorsUnit.METRIC,
 ) -> Response[Union[Error, GetMultipleSensorsResponse200]]:
     """Get sensors for a set of devices
+
+     Get sensors for a set of devices. The response will contain the latest sensor values for the
+    devices.
+    The sensor values are updated depending on the device types sampling rate.
+    It is recommended to poll the API at a regular interval to get the latest sensor values.
+    The response will be paginated with a maximum of 50 records per page.
 
     Args:
         account_id (str):
@@ -189,6 +207,12 @@ async def asyncio(
     unit: Union[Unset, GetMultipleSensorsUnit] = GetMultipleSensorsUnit.METRIC,
 ) -> Optional[Union[Error, GetMultipleSensorsResponse200]]:
     """Get sensors for a set of devices
+
+     Get sensors for a set of devices. The response will contain the latest sensor values for the
+    devices.
+    The sensor values are updated depending on the device types sampling rate.
+    It is recommended to poll the API at a regular interval to get the latest sensor values.
+    The response will be paginated with a maximum of 50 records per page.
 
     Args:
         account_id (str):

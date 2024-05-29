@@ -1,4 +1,4 @@
-""" Example of fetching devices and sensors from Airthings API. """
+"""Example of fetching devices and sensors from Airthings API."""
 
 import sys
 
@@ -13,9 +13,7 @@ if __name__ == "__main__":
     client_id = sys.argv[1]
     client_secret = sys.argv[2]
 
-    airthings = Airthings(
-        client_id=client_id, client_secret=client_secret, is_metric=True
-    )
+    airthings = Airthings(client_id=client_id, client_secret=client_secret, is_metric=True)
 
     devices = airthings.update_devices()
     print(airthings.devices)

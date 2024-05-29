@@ -9,13 +9,18 @@ externalDocs:
   description: Find out more about consumerAPI
   url: https://consumer-api-doc.airthings.com/
 servers:
-  - url: https://consumer-api.airthings.com/v1
+  - url: https://consumer-api.airthings.com
     description: Airthings for Consumer API (prod)
 
 paths:
   /v1/accounts/{accountId}/sensors:
     get:
       summary: Get sensors for a set of devices
+      description: |
+        Get sensors for a set of devices. The response will contain the latest sensor values for the devices.
+        The sensor values are updated depending on the device types sampling rate.
+        It is recommended to poll the API at a regular interval to get the latest sensor values.
+        The response will be paginated with a maximum of 50 records per page.
       operationId: getMultipleSensors
       parameters:
         - $ref: '#/components/parameters/deviceSerialNumbers'
@@ -78,6 +83,7 @@ paths:
   /v1/accounts/{accountId}/devices:
     get:
       summary: Get all devices connected to a user
+      description: List all devices (and their sensor abilities) connected to a user’s account. The data returned by this endpoint changes when a device is registered, unregistered or renamed.
       operationId: getDevices
       parameters:
         - $ref: '#/components/parameters/accountId'
@@ -101,6 +107,7 @@ paths:
   /v1/accounts:
     get:
       summary: List all accounts the current user is member of
+      description: Lists all accounts the current user is member of. The data returned by this endpoint changes when a user is added or removed from business accounts. It is safe to assume that the accountId remains constant for Consumer users. The accountId returned by this endpoint is used to fetch the devices and sensors from the other endpoints.
       operationId: getAccountsIds
       tags:
         - Accounts
