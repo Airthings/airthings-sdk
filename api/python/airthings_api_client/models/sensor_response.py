@@ -5,11 +5,11 @@ from attrs import field as _attrs_field
 
 from ..types import UNSET, Unset
 
-T = TypeVar("T", bound="SensorResponseType0")
+T = TypeVar("T", bound="SensorResponse")
 
 
 @_attrs_define
-class SensorResponseType0:
+class SensorResponse:
     """
     Attributes:
         sensor_type (Union[Unset, str]):
@@ -50,14 +50,14 @@ class SensorResponseType0:
 
         unit = d.pop("unit", UNSET)
 
-        sensor_response_type_0 = cls(
+        sensor_response = cls(
             sensor_type=sensor_type,
             value=value,
             unit=unit,
         )
 
-        sensor_response_type_0.additional_properties = d
-        return sensor_response_type_0
+        sensor_response.additional_properties = d
+        return sensor_response
 
     @property
     def additional_keys(self) -> List[str]:

@@ -7,7 +7,7 @@ from .devices_response import DevicesResponse
 from .error import Error
 from .get_multiple_sensors_response_200 import GetMultipleSensorsResponse200
 from .get_multiple_sensors_unit import GetMultipleSensorsUnit
-from .sensor_response_type_0 import SensorResponseType0
+from .sensor_response import SensorResponse
 from .sensors_response import SensorsResponse
 
 __all__ = (
@@ -18,6 +18,6 @@ __all__ = (
     "Error",
     "GetMultipleSensorsResponse200",
     "GetMultipleSensorsUnit",
-    "SensorResponseType0",
+    "SensorResponse",
     "SensorsResponse",
 )

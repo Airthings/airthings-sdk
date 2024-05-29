@@ -6,7 +6,7 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-    from ..models.sensor_response_type_0 import SensorResponseType0
+    from ..models.sensor_response import SensorResponse
 
 
 T = TypeVar("T", bound="SensorsResponse")
@@ -17,19 +17,19 @@ class SensorsResponse:
     """
     Attributes:
         serial_number (Union[Unset, str]):
-        sensors (Union[Unset, List[Union['SensorResponseType0', None]]]):
+        sensors (Union[Unset, List[Union['SensorResponse', None]]]):
         recorded (Union[None, Unset, str]):
         battery_percentage (Union[None, Unset, int]):
     """
 
     serial_number: Union[Unset, str] = UNSET
-    sensors: Union[Unset, List[Union["SensorResponseType0", None]]] = UNSET
+    sensors: Union[Unset, List[Union["SensorResponse", None]]] = UNSET
     recorded: Union[None, Unset, str] = UNSET
     battery_percentage: Union[None, Unset, int] = UNSET
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
-        from ..models.sensor_response_type_0 import SensorResponseType0
+        from ..models.sensor_response import SensorResponse
 
         serial_number = self.serial_number
 
@@ -38,7 +38,7 @@ class SensorsResponse:
             sensors = []
             for sensors_item_data in self.sensors:
                 sensors_item: Union[Dict[str, Any], None]
-                if isinstance(sensors_item_data, SensorResponseType0):
+                if isinstance(sensors_item_data, SensorResponse):
                     sensors_item = sensors_item_data.to_dict()
                 else:
                     sensors_item = sensors_item_data
@@ -72,7 +72,7 @@ class SensorsResponse:
 
     @classmethod
     def from_dict(cls: Type[T], src_dict: Dict[str, Any]) -> T:
-        from ..models.sensor_response_type_0 import SensorResponseType0
+        from ..models.sensor_response import SensorResponse
 
         d = src_dict.copy()
         serial_number = d.pop("serialNumber", UNSET)
@@ -81,18 +81,18 @@ class SensorsResponse:
         _sensors = d.pop("sensors", UNSET)
         for sensors_item_data in _sensors or []:
 
-            def _parse_sensors_item(data: object) -> Union["SensorResponseType0", None]:
+            def _parse_sensors_item(data: object) -> Union["SensorResponse", None]:
                 if data is None:
                     return data
                 try:
                     if not isinstance(data, dict):
                         raise TypeError()
-                    componentsschemas_sensor_response_type_0 = SensorResponseType0.from_dict(data)
+                    componentsschemas_sensor_response_type_0 = SensorResponse.from_dict(data)
 
                     return componentsschemas_sensor_response_type_0
                 except:  # noqa: E722
                     pass
-                return cast(Union["SensorResponseType0", None], data)
+                return cast(Union["SensorResponse", None], data)
 
             sensors_item = _parse_sensors_item(sensors_item_data)
 

@@ -6,7 +6,7 @@ from typing import Optional, cast
 
 from airthings_api_client.models import (
     DeviceResponse,
-    SensorResponseType0,
+    SensorResponse,
     SensorsResponse,
 )
 from airthings_api_client.types import Unset
@@ -21,8 +21,8 @@ class AirthingsSensor:
     unit: str
 
     @classmethod
-    def from_response(cls, sensor_response: SensorResponseType0 | None | Unset):
-        """Create an AirthingsSensor from a SensorResponseType0"""
+    def from_response(cls, sensor_response: SensorResponse | None | Unset):
+        """Create an AirthingsSensor from a SensorResponse"""
 
         if sensor_response is None or isinstance(sensor_response, Unset):
             return None
