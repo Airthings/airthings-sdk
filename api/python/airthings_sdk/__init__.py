@@ -1,8 +1,8 @@
-""" A client library for accessing Airthings for Consumer API """
+"""A client library for accessing Airthings for Consumer API"""
 
+from .errors import ApiError, UnexpectedPayloadError, UnexpectedStatusError
 from .mapper import Airthings
 from .types import AirthingsDevice, AirthingsSensor
-from .errors import UnexpectedStatusError, ApiError, UnexpectedPayloadError
 
 __all__ = (
     "Airthings",
