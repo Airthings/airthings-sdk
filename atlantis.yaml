@@ -1,6 +1,8 @@
 ## atlantis.yaml file - This file overwrites the Server Side Repo Config section specified in the values.yaml file
 version: 3
 automerge: true
+parallel_plan: true
+delete_source_branch_on_merge: true
 projects:
   - name: dev
     dir:  /infra/environments/dev
@@ -8,15 +10,19 @@ projects:
     autoplan:
       when_modified:  [ "../../modules/**/*.tf", "../*.tf", "*.tf*" ]
       enabled: true
+    plan_requirements: [undiverged]
+    apply_requirements: [mergeable, approved, undiverged]
   - name: production
     dir: /infra/environments/prod
     workspace: default
     autoplan:
       enabled: true
+    plan_requirements: [undiverged]
     apply_requirements: [mergeable, approved, undiverged]
   - name: insight
     dir: /infra/environments/insight
     workspace: default
     autoplan:
       enabled: true
+    plan_requirements: [undiverged]
     apply_requirements: [mergeable, approved, undiverged]
