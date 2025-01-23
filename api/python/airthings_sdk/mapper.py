@@ -5,7 +5,7 @@ from typing import List, Optional
 
 from httpx import AsyncClient
 
-from airthings_api_client import Client, AuthenticatedClient
+from airthings_api_client import AuthenticatedClient, Client
 from airthings_api_client.api.accounts import get_accounts_ids
 from airthings_api_client.api.device import get_devices
 from airthings_api_client.api.sensor import get_multiple_sensors
@@ -18,9 +18,9 @@ from airthings_api_client.models.device_response import DeviceResponse
 from airthings_api_client.models.get_multiple_sensors_unit import GetMultipleSensorsUnit
 from airthings_api_client.models.sensors_response import SensorsResponse
 from airthings_api_client.types import Unset
-from airthings_sdk.const import AUTH_URL, API_URL
-from airthings_sdk.errors import UnexpectedStatusError, UnexpectedPayloadError, ApiError
-from airthings_sdk.types import AirthingsToken, AirthingsDevice
+from airthings_sdk.const import API_URL, AUTH_URL
+from airthings_sdk.errors import ApiError, UnexpectedPayloadError, UnexpectedStatusError
+from airthings_sdk.types import AirthingsDevice, AirthingsToken
 
 logger = logging.getLogger(__name__)
 
@@ -56,11 +56,7 @@ class Airthings:
         """Init Airthings data handler."""
         self._client_id = client_id
         self._client_secret = client_secret
-        self._unit = (
-            GetMultipleSensorsUnit.METRIC
-            if is_metric
-            else GetMultipleSensorsUnit.IMPERIAL
-        )
+        self._unit = GetMultipleSensorsUnit.METRIC if is_metric else GetMultipleSensorsUnit.IMPERIAL
 
         if web_session:
             self._auth_api_client.set_async_httpx_client(web_session)
@@ -86,9 +82,7 @@ class Airthings:
             access_token = auth_response.json().get("access_token")
             expires_in = auth_response.json().get("expires_in")
 
-            self._access_token.set_token(
-                access_token=access_token, expires_in=expires_in
-            )
+            self._access_token.set_token(access_token=access_token, expires_in=expires_in)
             self._api_client.token = self._access_token.value
         except LibUnexpectedStatus as e:
             raise UnexpectedStatusError(e.status_code, e.content) from e
@@ -104,16 +98,13 @@ class Airthings:
 
             res = {}
             for account_id in account_ids:
-
                 devices = self._fetch_all_devices(account_id=account_id)
 
                 device_map = {}
                 for device in devices:
                     device_map[device.serial_number] = device
 
-                sensors = self._fetch_all_device_sensors(
-                    account_id=account_id, unit=self._unit
-                )
+                sensors = self._fetch_all_device_sensors(account_id=account_id, unit=self._unit)
 
                 for sensor in sensors:
                     serial_number = sensor.serial_number
@@ -146,17 +137,11 @@ class Airthings:
         if payload is None:
             raise UnexpectedPayloadError(response.content)
 
-        return [
-            account.id
-            for account in (payload.accounts or [])
-            if isinstance(account.id, str)
-        ]
+        return [account.id for account in (payload.accounts or []) if isinstance(account.id, str)]
 
     def _fetch_all_devices(self, account_id: str) -> List[DeviceResponse]:
         """Fetch devices for a given account"""
-        response = get_devices.sync_detailed(
-            account_id=account_id, client=self._api_client
-        )
+        response = get_devices.sync_detailed(account_id=account_id, client=self._api_client)
 
         payload = response.parsed
 
@@ -184,10 +169,7 @@ class Airthings:
         if isinstance(payload, Error):
             raise ApiError(payload.message or "Unknown error")
 
-        if (
-            payload is None
-            or isinstance(payload, GetMultipleSensorsResponse200) is False
-        ):
+        if payload is None or isinstance(payload, GetMultipleSensorsResponse200) is False:
             raise UnexpectedPayloadError(response.content)
 
         sensors = payload.results or []

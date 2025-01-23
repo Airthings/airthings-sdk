@@ -5,8 +5,8 @@ from dataclasses import dataclass, field
 from typing import Optional, cast
 
 from airthings_api_client.models import (
-    SensorResponseType0,
     DeviceResponse,
+    SensorResponseType0,
     SensorsResponse,
 )
 from airthings_api_client.types import Unset
@@ -46,9 +46,7 @@ class AirthingsDevice:
     sensors: list[AirthingsSensor] = field(default_factory=list)
 
     @classmethod
-    def from_response(
-        cls, device_response: DeviceResponse, sensors_response: SensorsResponse
-    ) -> "AirthingsDevice":
+    def from_response(cls, device_response: DeviceResponse, sensors_response: SensorsResponse) -> "AirthingsDevice":
         """Create an AirthingsDevice from a DeviceResponse and a SensorsResponse"""
 
         mapped = map(AirthingsSensor.from_response, sensors_response.sensors or [])
@@ -85,8 +83,4 @@ class AirthingsToken:
 
     def is_valid(self) -> bool:
         """Check if the token is valid."""
-        return (
-            self.value is not None
-            and self._expires is not None
-            and self._expires > (int(time.time()) + 20)
-        )
+        return self.value is not None and self._expires is not None and self._expires > (int(time.time()) + 20)
