@@ -56,11 +56,7 @@ class Airthings:
         """Init Airthings data handler."""
         self._client_id = client_id
         self._client_secret = client_secret
-        self._unit = (
-            GetMultipleSensorsUnit.METRIC
-            if is_metric
-            else GetMultipleSensorsUnit.IMPERIAL
-        )
+        self._unit = GetMultipleSensorsUnit.METRIC if is_metric else GetMultipleSensorsUnit.IMPERIAL
 
         if web_session:
             self._auth_api_client.set_async_httpx_client(web_session)
@@ -151,11 +147,7 @@ class Airthings:
         if payload is None:
             raise UnexpectedPayloadError(response.content)
 
-        return [
-            account.id
-            for account in (payload.accounts or [])
-            if isinstance(account.id, str)
-        ]
+        return [account.id for account in (payload.accounts or []) if isinstance(account.id, str)]
 
     async def _fetch_all_devices(self, account_id: str) -> list[DeviceResponse]:
         """Fetch devices for a given account"""
