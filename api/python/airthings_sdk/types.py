@@ -85,8 +85,8 @@ class AirthingsToken:
 
     def is_valid(self) -> bool:
         """Check if the token is valid."""
-        return (
-            self.value is not None
-            and self._expires is not None
-            and self._expires > (int(time.time()) + 20)
-        )
+        if self.value is None:
+            return False
+        if (expires := self._expires) is not None:
+            return expires > (int(time.time()) + 20)
+        return False
