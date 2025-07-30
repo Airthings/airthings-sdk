@@ -1,5 +1,6 @@
 """Airthings API SDK types."""
 
+import logging
 import time
 from dataclasses import dataclass, field
 from enum import Enum
@@ -12,19 +13,23 @@ from airthings_api_client.models import (
 )
 from airthings_api_client.types import Unset
 
+_LOGGER = logging.getLogger(__name__)
+
 
 class AirthingsDeviceType(str, Enum):
     """Airthings device types."""
 
-    VIEW_PLUS = "VIEW_PLUS"
-    VIEW_RADON = "VIEW_RADON"
-    VIEW_POLLUTION = "VIEW_POLLUTION"
-    WAVE = "WAVE"
-    WAVE_PLUS = "WAVE_PLUS"
-    WAVE_MINI = "WAVE_MINI"
-    WAVE_RADON = "WAVE_GEN2"
-    HUB = "HUB"
     AP_1 = "AP_1"
+    CORENTIUM_HOME_2 = "RAVEN_RADON"
+    HUB = "HUB"
+    VIEW_PLUS = "VIEW_PLUS"
+    VIEW_POLLUTION = "VIEW_POLLUTION"
+    VIEW_RADON = "VIEW_RADON"
+    WAVE = "WAVE"
+    WAVE_ENHANCE = "WAVE_ENHANCE"
+    WAVE_MINI = "WAVE_MINI"
+    WAVE_PLUS = "WAVE_PLUS"
+    WAVE_RADON = "WAVE_GEN2"
     UNKNOWN = "UNKNOWN"
 
     @classmethod
@@ -36,28 +41,33 @@ class AirthingsDeviceType(str, Enum):
                 return device_type
         unknown_device = AirthingsDeviceType.UNKNOWN
         unknown_device.raw_value = value
+        _LOGGER.debug("Unknown device type: %s", value)
         return unknown_device
 
     @property
     def product_name(self) -> str:
-        if self == AirthingsDeviceType.VIEW_PLUS:
-            return "View Plus"
-        if self == AirthingsDeviceType.VIEW_RADON:
-            return "View Radon"
-        if self == AirthingsDeviceType.VIEW_POLLUTION:
-            return "View Pollution"
-        if self == AirthingsDeviceType.WAVE:
-            return "Wave Gen 1"
-        if self == AirthingsDeviceType.WAVE_PLUS:
-            return "Wave Plus"
-        if self == AirthingsDeviceType.WAVE_MINI:
-            return "Wave Mini"
-        if self == AirthingsDeviceType.WAVE_RADON:
-            return "Wave Radon"
-        if self == AirthingsDeviceType.HUB:
-            return "Hub"
         if self == AirthingsDeviceType.AP_1:
             return "Renew"
+        if self == AirthingsDeviceType.CORENTIUM_HOME_2:
+            return "Corentium Home 2"
+        if self == AirthingsDeviceType.HUB:
+            return "Hub"
+        if self == AirthingsDeviceType.VIEW_PLUS:
+            return "View Plus"
+        if self == AirthingsDeviceType.VIEW_POLLUTION:
+            return "View Pollution"
+        if self == AirthingsDeviceType.VIEW_RADON:
+            return "View Radon"
+        if self == AirthingsDeviceType.WAVE:
+            return "Wave Gen 1"
+        if self == AirthingsDeviceType.WAVE_ENHANCE:
+            return "Wave Enhance"
+        if self == AirthingsDeviceType.WAVE_MINI:
+            return "Wave Mini"
+        if self == AirthingsDeviceType.WAVE_PLUS:
+            return "Wave Plus"
+        if self == AirthingsDeviceType.WAVE_RADON:
+            return "Wave Radon"
         return "Unknown"
 
 
