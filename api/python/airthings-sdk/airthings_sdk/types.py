@@ -108,10 +108,23 @@ class AirthingsDevice:
     def from_response(
         cls,
         device_response: DeviceResponse,
-        sensors_response: SensorsResponse,
     ) -> "AirthingsDevice":
         """Create an AirthingsDevice from a DeviceResponse and a SensorsResponse"""
 
+        return cls(
+            serial_number=cast(str, device_response.serial_number),
+            name=cast(str, device_response.name),
+            type=AirthingsDeviceType.from_raw_value(cast(str, device_response.type_)),
+            home=cast(str | None, device_response.home),
+            recorded=None,
+            sensors=[],
+        )
+
+    def update_sensors(
+        self,
+        sensors_response: SensorsResponse,
+    ) -> None:
+        """Update the sensors of the device from a SensorsResponse"""
         mapped = map(AirthingsSensor.from_response, sensors_response.sensors or [])
         filtered = list(filter(lambda sensor: sensor is not None, mapped))
 
@@ -123,14 +136,9 @@ class AirthingsDevice:
                     unit="%",
                 )
             )
-        return cls(
-            serial_number=cast(str, device_response.serial_number),
-            name=cast(str, device_response.name),
-            type=AirthingsDeviceType.from_raw_value(cast(str, device_response.type_)),
-            home=cast(str | None, device_response.home),
-            recorded=cast(str | None, sensors_response.recorded),
-            sensors=filtered,
-        )
+
+        self.sensors = filtered
+        self.recorded = cast(str | None, sensors_response.recorded)
 
 
 class AirthingsToken:

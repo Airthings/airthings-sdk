@@ -9,7 +9,7 @@ __all__ = (
     "AirthingsDevice",
     "AirthingsDeviceType",
     "AirthingsSensor",
-    "UnexpectedStatusError",
     "ApiError",
     "UnexpectedPayloadError",
+    "UnexpectedStatusError",
 )

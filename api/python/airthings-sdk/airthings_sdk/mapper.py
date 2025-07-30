@@ -1,6 +1,7 @@
 """Module providing an Airthings API SDK."""
 
 import logging
+import time
 from typing import Optional
 
 from httpx import AsyncClient
@@ -17,10 +18,9 @@ from airthings_api_client.models import (
 from airthings_api_client.models.device_response import DeviceResponse
 from airthings_api_client.models.get_multiple_sensors_unit import GetMultipleSensorsUnit
 from airthings_api_client.models.sensors_response import SensorsResponse
-from airthings_api_client.types import Unset
-from airthings_sdk.const import API_URL, AUTH_URL
+from airthings_sdk.const import API_URL, AUTH_URL, CACHE_TIMEOUT
 from airthings_sdk.errors import ApiError, UnexpectedPayloadError, UnexpectedStatusError
-from airthings_sdk.types import AirthingsDevice, AirthingsDeviceType, AirthingsToken
+from airthings_sdk.types import AirthingsDevice, AirthingsToken
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +33,9 @@ class Airthings:
 
     _unit: GetMultipleSensorsUnit
     _access_token: AirthingsToken = AirthingsToken()
+
+    _accounts: list[str] = []
+    _cache_timestamp: Optional[int] = None
 
     _auth_api_client: Client = Client(
         base_url=AUTH_URL,
@@ -62,10 +65,11 @@ class Airthings:
             self._auth_api_client.set_async_httpx_client(web_session)
             self._api_client.set_async_httpx_client(web_session)
 
-    def verify_auth(self):
+    def authenticate(self):
         """Make sure the access token is valid. If not, fetch a new one."""
 
         if self._access_token.is_valid():
+            logger.info("Access token is valid, no need to refresh.")
             return
 
         try:
@@ -87,61 +91,88 @@ class Airthings:
                 expires_in=expires_in,
             )
             self._api_client.token = self._access_token.value
+            logger.info("Authenticated successfully ")
         except LibUnexpectedStatus as e:
             raise UnexpectedStatusError(e.status_code, e.content) from e
 
-    async def update_devices(self) -> dict[str, AirthingsDevice]:
+    async def _update_devices_cache(self):
+        """Update the devices cache."""
+        self._cache_timestamp = int(time.time())
+        devices: list[DeviceResponse] = []
+        for account in self._accounts:
+            devices.extend(await self._fetch_all_devices(account_id=account))
+            logger.info("Fetched %s devices from account %s.", len(devices), account)
+        self.devices = {
+            device.serial_number: AirthingsDevice.from_response(device)
+            for device in devices
+        }
+        logger.info("Updated devices cache with %s devices.", len(self.devices))
+
+    async def update_data(self, invalidate_cache: bool = False) -> dict[str, AirthingsDevice]:
         """Update devices and sensors from Airthings API. Return a dict of devices."""
         logger.info("Fetching devices and sensors from Airthings API.")
 
-        self.verify_auth()
+        should_refresh = (
+            invalidate_cache or
+            not self.devices or
+            self._accounts_fetched_at is None or
+            self._accounts_fetched_at + CACHE_TIMEOUT < int(time.time())
+        )
+
+        fetched_devices = False
 
         try:
-            account_ids = await self._fetch_all_accounts_ids()
+            if should_refresh:
+                self._accounts = await self._fetch_all_accounts_ids()
+                self._accounts_fetched_at = int(time.time())
+                logger.info("Fetched %s accounts", len(self._accounts))
 
-            res = {}
-            for account_id in account_ids:
-                devices = await self._fetch_all_devices(account_id=account_id)
+                await self._update_devices_cache()
+                fetched_devices = True
 
-                device_map = {}
-                for device in devices:
-                    device_map[device.serial_number] = device
+            sensor_responses = []
 
-                sensors = await self._fetch_all_device_sensors(
-                    account_id=account_id,
-                    unit=self._unit,
+            for account_id in self._accounts:
+                # Fetch sensors for each account
+                sensor_responses.extend(
+                    await self._fetch_all_device_sensors(
+                        account_id=account_id,
+                        unit=self._unit,
+                    )
                 )
 
-                for sensor in sensors:
-                    serial_number = sensor.serial_number
+            for sensor_response in sensor_responses:
+                device_serial = sensor_response.serial_number
+                if not isinstance(device_serial, str):
+                    logger.info("Invalid serial number: %s", device_serial)
+                    continue
+                elif device_serial not in self.devices:
+                    if not fetched_devices:
+                        await self._update_devices_cache()
+                        fetched_devices = True
+                        break
 
-                    if isinstance(serial_number, Unset):
-                        continue
-
-                    sensor_device = device_map.get(serial_number)
-                    if sensor_device is None:
-                        logger.debug("%s not found in devices list.", serial_number)
-                        continue
-                    mapped = AirthingsDevice.from_response(sensor_device, sensor)
-                    if mapped.type == AirthingsDeviceType.HUB:
-                        logger.debug("Skipping Hub %s.", serial_number)
-                        continue
-                    res[serial_number] = mapped
-
-            self.devices = res
-            logger.info("Fetched %s devices and sensors from Airthings API.", len(res))
-            return res
+            for device in self.devices.values():
+                sensors_response = next(
+                    (s for s in sensor_responses if s.serial_number == device.serial_number),
+                    None,
+                )
+                if sensors_response:
+                    device.update_sensors(sensors_response)
+            return self.devices
         except LibUnexpectedStatus as e:
             logger.error(
-                "Unexpected status code %s received when fetching devices and sensors.",
+                "Unexpected status code %s received when fetching devices and sensors",
                 e.status_code,
             )
             raise UnexpectedStatusError(e.status_code, e.content) from e
 
     async def _fetch_all_accounts_ids(self) -> list[str]:
         """Fetch accounts for the given client"""
-        response = await get_accounts_ids.asyncio_detailed(client=self._api_client)
 
+        self.authenticate()
+
+        response = await get_accounts_ids.asyncio_detailed(client=self._api_client)
         payload = response.parsed
 
         if payload is None:
@@ -151,6 +182,9 @@ class Airthings:
 
     async def _fetch_all_devices(self, account_id: str) -> list[DeviceResponse]:
         """Fetch devices for a given account"""
+
+        self.authenticate()
+
         response = await get_devices.asyncio_detailed(
             account_id=account_id,
             client=self._api_client,
@@ -170,6 +204,7 @@ class Airthings:
         page_number: int = 1,
     ) -> list[SensorsResponse]:
         """Fetch sensors for a given account"""
+
         try:
             response = await get_multiple_sensors.asyncio_detailed(
                 account_id=account_id,
