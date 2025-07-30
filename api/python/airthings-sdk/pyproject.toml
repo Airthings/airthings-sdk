@@ -1,11 +1,12 @@
 [tool.poetry]
-name = "python"
+name = "airthings-sdk"
 version = "1.0.0"
 description = "A client library for accessing Airthings for Consumer API"
 authors = []
 readme = "README.md"
 packages = [
     { include = "airthings_api_client" },
+    { include = "airthings_sdk" },
 ]
 include = ["CHANGELOG.md", "airthings_api_client/py.typed"]
 

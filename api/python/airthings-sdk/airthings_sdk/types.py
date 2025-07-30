@@ -116,7 +116,7 @@ class AirthingsDevice:
         return cls(
             serial_number=cast(str, device_response.serial_number),
             name=cast(str, device_response.name),
-            type=AirthingsDeviceType.from_raw_value(cast(str, device_response.type)),
+            type=AirthingsDeviceType.from_raw_value(cast(str, device_response.type_)),
             home=cast(str | None, device_response.home),
             recorded=cast(str | None, sensors_response.recorded),
             sensors=filtered,
