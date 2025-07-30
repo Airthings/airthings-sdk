@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional, Union
 
 import httpx
 
@@ -14,13 +14,13 @@ from ...types import UNSET, Response, Unset
 def _get_kwargs(
     account_id: str,
     *,
-    sn: Union[Unset, List[str]] = UNSET,
+    sn: Union[Unset, list[str]] = UNSET,
     page_number: Union[Unset, int] = 1,
     unit: Union[Unset, GetMultipleSensorsUnit] = GetMultipleSensorsUnit.METRIC,
-) -> Dict[str, Any]:
-    params: Dict[str, Any] = {}
+) -> dict[str, Any]:
+    params: dict[str, Any] = {}
 
-    json_sn: Union[Unset, List[str]] = UNSET
+    json_sn: Union[Unset, list[str]] = UNSET
     if not isinstance(sn, Unset):
         json_sn = sn
 
@@ -36,7 +36,7 @@ def _get_kwargs(
 
     params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
 
-    _kwargs: Dict[str, Any] = {
+    _kwargs: dict[str, Any] = {
         "method": "get",
         "url": f"/v1/accounts/{account_id}/sensors",
         "params": params,
@@ -48,11 +48,11 @@ def _get_kwargs(
 def _parse_response(
     *, client: Union[AuthenticatedClient, Client], response: httpx.Response
 ) -> Optional[Union[Error, GetMultipleSensorsResponse200]]:
-    if response.status_code == HTTPStatus.OK:
+    if response.status_code == 200:
         response_200 = GetMultipleSensorsResponse200.from_dict(response.json())
 
         return response_200
-    if response.status_code == HTTPStatus.TOO_MANY_REQUESTS:
+    if response.status_code == 429:
         response_429 = Error.from_dict(response.json())
 
         return response_429
@@ -77,7 +77,7 @@ def sync_detailed(
     account_id: str,
     *,
     client: AuthenticatedClient,
-    sn: Union[Unset, List[str]] = UNSET,
+    sn: Union[Unset, list[str]] = UNSET,
     page_number: Union[Unset, int] = 1,
     unit: Union[Unset, GetMultipleSensorsUnit] = GetMultipleSensorsUnit.METRIC,
 ) -> Response[Union[Error, GetMultipleSensorsResponse200]]:
@@ -91,7 +91,7 @@ def sync_detailed(
 
     Args:
         account_id (str):
-        sn (Union[Unset, List[str]]):
+        sn (Union[Unset, list[str]]):
         page_number (Union[Unset, int]):  Default: 1.
         unit (Union[Unset, GetMultipleSensorsUnit]):  Default: GetMultipleSensorsUnit.METRIC.
 
@@ -121,7 +121,7 @@ def sync(
     account_id: str,
     *,
     client: AuthenticatedClient,
-    sn: Union[Unset, List[str]] = UNSET,
+    sn: Union[Unset, list[str]] = UNSET,
     page_number: Union[Unset, int] = 1,
     unit: Union[Unset, GetMultipleSensorsUnit] = GetMultipleSensorsUnit.METRIC,
 ) -> Optional[Union[Error, GetMultipleSensorsResponse200]]:
@@ -135,7 +135,7 @@ def sync(
 
     Args:
         account_id (str):
-        sn (Union[Unset, List[str]]):
+        sn (Union[Unset, list[str]]):
         page_number (Union[Unset, int]):  Default: 1.
         unit (Union[Unset, GetMultipleSensorsUnit]):  Default: GetMultipleSensorsUnit.METRIC.
 
@@ -160,7 +160,7 @@ async def asyncio_detailed(
     account_id: str,
     *,
     client: AuthenticatedClient,
-    sn: Union[Unset, List[str]] = UNSET,
+    sn: Union[Unset, list[str]] = UNSET,
     page_number: Union[Unset, int] = 1,
     unit: Union[Unset, GetMultipleSensorsUnit] = GetMultipleSensorsUnit.METRIC,
 ) -> Response[Union[Error, GetMultipleSensorsResponse200]]:
@@ -174,7 +174,7 @@ async def asyncio_detailed(
 
     Args:
         account_id (str):
-        sn (Union[Unset, List[str]]):
+        sn (Union[Unset, list[str]]):
         page_number (Union[Unset, int]):  Default: 1.
         unit (Union[Unset, GetMultipleSensorsUnit]):  Default: GetMultipleSensorsUnit.METRIC.
 
@@ -202,7 +202,7 @@ async def asyncio(
     account_id: str,
     *,
     client: AuthenticatedClient,
-    sn: Union[Unset, List[str]] = UNSET,
+    sn: Union[Unset, list[str]] = UNSET,
     page_number: Union[Unset, int] = 1,
     unit: Union[Unset, GetMultipleSensorsUnit] = GetMultipleSensorsUnit.METRIC,
 ) -> Optional[Union[Error, GetMultipleSensorsResponse200]]:
@@ -216,7 +216,7 @@ async def asyncio(
 
     Args:
         account_id (str):
-        sn (Union[Unset, List[str]]):
+        sn (Union[Unset, list[str]]):
         page_number (Union[Unset, int]):  Default: 1.
         unit (Union[Unset, GetMultipleSensorsUnit]):  Default: GetMultipleSensorsUnit.METRIC.
 

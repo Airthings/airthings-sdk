@@ -1,4 +1,5 @@
-from typing import TYPE_CHECKING, Any, Dict, List, Type, TypeVar, Union, cast
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar, Union, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -17,27 +18,27 @@ class SensorsResponse:
     """
     Attributes:
         serial_number (Union[Unset, str]):
-        sensors (Union[Unset, List[Union['SensorResponse', None]]]):
+        sensors (Union[Unset, list[Union['SensorResponse', None]]]):
         recorded (Union[None, Unset, str]):
         battery_percentage (Union[None, Unset, int]):
     """
 
     serial_number: Union[Unset, str] = UNSET
-    sensors: Union[Unset, List[Union["SensorResponse", None]]] = UNSET
+    sensors: Union[Unset, list[Union["SensorResponse", None]]] = UNSET
     recorded: Union[None, Unset, str] = UNSET
     battery_percentage: Union[None, Unset, int] = UNSET
-    additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
+    additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         from ..models.sensor_response import SensorResponse
 
         serial_number = self.serial_number
 
-        sensors: Union[Unset, List[Union[Dict[str, Any], None]]] = UNSET
+        sensors: Union[Unset, list[Union[None, dict[str, Any]]]] = UNSET
         if not isinstance(self.sensors, Unset):
             sensors = []
             for sensors_item_data in self.sensors:
-                sensors_item: Union[Dict[str, Any], None]
+                sensors_item: Union[None, dict[str, Any]]
                 if isinstance(sensors_item_data, SensorResponse):
                     sensors_item = sensors_item_data.to_dict()
                 else:
@@ -56,7 +57,7 @@ class SensorsResponse:
         else:
             battery_percentage = self.battery_percentage
 
-        field_dict: Dict[str, Any] = {}
+        field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update({})
         if serial_number is not UNSET:
@@ -71,10 +72,10 @@ class SensorsResponse:
         return field_dict
 
     @classmethod
-    def from_dict(cls: Type[T], src_dict: Dict[str, Any]) -> T:
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         from ..models.sensor_response import SensorResponse
 
-        d = src_dict.copy()
+        d = dict(src_dict)
         serial_number = d.pop("serialNumber", UNSET)
 
         sensors = []
@@ -127,7 +128,7 @@ class SensorsResponse:
         return sensors_response
 
     @property
-    def additional_keys(self) -> List[str]:
+    def additional_keys(self) -> list[str]:
         return list(self.additional_properties.keys())
 
     def __getitem__(self, key: str) -> Any:

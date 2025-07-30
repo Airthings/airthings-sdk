@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Dict, Optional, Union
+from typing import Any, Optional, Union
 
 import httpx
 
@@ -9,8 +9,8 @@ from ...models.accounts_response import AccountsResponse
 from ...types import Response
 
 
-def _get_kwargs() -> Dict[str, Any]:
-    _kwargs: Dict[str, Any] = {
+def _get_kwargs() -> dict[str, Any]:
+    _kwargs: dict[str, Any] = {
         "method": "get",
         "url": "/v1/accounts",
     }
@@ -21,7 +21,7 @@ def _get_kwargs() -> Dict[str, Any]:
 def _parse_response(
     *, client: Union[AuthenticatedClient, Client], response: httpx.Response
 ) -> Optional[AccountsResponse]:
-    if response.status_code == HTTPStatus.OK:
+    if response.status_code == 200:
         response_200 = AccountsResponse.from_dict(response.json())
 
         return response_200

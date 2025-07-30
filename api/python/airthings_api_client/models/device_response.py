@@ -1,4 +1,5 @@
-from typing import Any, Dict, List, Type, TypeVar, Union, cast
+from collections.abc import Mapping
+from typing import Any, TypeVar, Union, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -15,18 +16,18 @@ class DeviceResponse:
         serial_number (Union[Unset, str]):
         home (Union[None, Unset, str]):
         name (Union[Unset, str]):
-        type (Union[Unset, str]):
-        sensors (Union[Unset, List[str]]):
+        type_ (Union[Unset, str]):
+        sensors (Union[Unset, list[str]]):
     """
 
     serial_number: Union[Unset, str] = UNSET
     home: Union[None, Unset, str] = UNSET
     name: Union[Unset, str] = UNSET
-    type: Union[Unset, str] = UNSET
-    sensors: Union[Unset, List[str]] = UNSET
-    additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
+    type_: Union[Unset, str] = UNSET
+    sensors: Union[Unset, list[str]] = UNSET
+    additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         serial_number = self.serial_number
 
         home: Union[None, Unset, str]
@@ -37,13 +38,13 @@ class DeviceResponse:
 
         name = self.name
 
-        type = self.type
+        type_ = self.type_
 
-        sensors: Union[Unset, List[str]] = UNSET
+        sensors: Union[Unset, list[str]] = UNSET
         if not isinstance(self.sensors, Unset):
             sensors = self.sensors
 
-        field_dict: Dict[str, Any] = {}
+        field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update({})
         if serial_number is not UNSET:
@@ -52,16 +53,16 @@ class DeviceResponse:
             field_dict["home"] = home
         if name is not UNSET:
             field_dict["name"] = name
-        if type is not UNSET:
-            field_dict["type"] = type
+        if type_ is not UNSET:
+            field_dict["type"] = type_
         if sensors is not UNSET:
             field_dict["sensors"] = sensors
 
         return field_dict
 
     @classmethod
-    def from_dict(cls: Type[T], src_dict: Dict[str, Any]) -> T:
-        d = src_dict.copy()
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+        d = dict(src_dict)
         serial_number = d.pop("serialNumber", UNSET)
 
         def _parse_home(data: object) -> Union[None, Unset, str]:
@@ -75,15 +76,15 @@ class DeviceResponse:
 
         name = d.pop("name", UNSET)
 
-        type = d.pop("type", UNSET)
+        type_ = d.pop("type", UNSET)
 
-        sensors = cast(List[str], d.pop("sensors", UNSET))
+        sensors = cast(list[str], d.pop("sensors", UNSET))
 
         device_response = cls(
             serial_number=serial_number,
             home=home,
             name=name,
-            type=type,
+            type_=type_,
             sensors=sensors,
         )
 
@@ -91,7 +92,7 @@ class DeviceResponse:
         return device_response
 
     @property
-    def additional_keys(self) -> List[str]:
+    def additional_keys(self) -> list[str]:
         return list(self.additional_properties.keys())
 
     def __getitem__(self, key: str) -> Any:
