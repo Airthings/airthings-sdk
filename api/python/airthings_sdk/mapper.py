@@ -1,7 +1,7 @@
 """Module providing an Airthings API SDK."""
 
 import logging
-from typing import List, Optional
+from typing import Optional
 
 from httpx import AsyncClient
 
@@ -56,7 +56,11 @@ class Airthings:
         """Init Airthings data handler."""
         self._client_id = client_id
         self._client_secret = client_secret
-        self._unit = GetMultipleSensorsUnit.METRIC if is_metric else GetMultipleSensorsUnit.IMPERIAL
+        self._unit = (
+            GetMultipleSensorsUnit.METRIC
+            if is_metric
+            else GetMultipleSensorsUnit.IMPERIAL
+        )
 
         if web_session:
             self._auth_api_client.set_async_httpx_client(web_session)
@@ -82,7 +86,10 @@ class Airthings:
             access_token = auth_response.json().get("access_token")
             expires_in = auth_response.json().get("expires_in")
 
-            self._access_token.set_token(access_token=access_token, expires_in=expires_in)
+            self._access_token.set_token(
+                access_token=access_token,
+                expires_in=expires_in,
+            )
             self._api_client.token = self._access_token.value
         except LibUnexpectedStatus as e:
             raise UnexpectedStatusError(e.status_code, e.content) from e
@@ -106,7 +113,7 @@ class Airthings:
 
                 sensors = await self._fetch_all_device_sensors(
                     account_id=account_id,
-                    unit=self._unit
+                    unit=self._unit,
                 )
 
                 for sensor in sensors:
@@ -135,7 +142,7 @@ class Airthings:
             )
             raise UnexpectedStatusError(e.status_code, e.content) from e
 
-    async def _fetch_all_accounts_ids(self) -> List[str]:
+    async def _fetch_all_accounts_ids(self) -> list[str]:
         """Fetch accounts for the given client"""
         response = await get_accounts_ids.asyncio_detailed(client=self._api_client)
 
@@ -144,13 +151,17 @@ class Airthings:
         if payload is None:
             raise UnexpectedPayloadError(response.content)
 
-        return [account.id for account in (payload.accounts or []) if isinstance(account.id, str)]
+        return [
+            account.id
+            for account in (payload.accounts or [])
+            if isinstance(account.id, str)
+        ]
 
-    async def _fetch_all_devices(self, account_id: str) -> List[DeviceResponse]:
+    async def _fetch_all_devices(self, account_id: str) -> list[DeviceResponse]:
         """Fetch devices for a given account"""
         response = await get_devices.asyncio_detailed(
             account_id=account_id,
-            client=self._api_client
+            client=self._api_client,
         )
 
         payload = response.parsed
@@ -165,7 +176,7 @@ class Airthings:
         account_id: str,
         unit: GetMultipleSensorsUnit,
         page_number: int = 1,
-    ) -> List[SensorsResponse]:
+    ) -> list[SensorsResponse]:
         """Fetch sensors for a given account"""
         try:
             response = await get_multiple_sensors.asyncio_detailed(
@@ -182,7 +193,10 @@ class Airthings:
         if isinstance(payload, Error):
             raise ApiError(payload.message or "Unknown error")
 
-        if payload is None or isinstance(payload, GetMultipleSensorsResponse200) is False:
+        if (
+            payload is None
+            or not isinstance(payload, GetMultipleSensorsResponse200)
+        ):
             raise UnexpectedPayloadError(response.content)
 
         sensors = payload.results or []

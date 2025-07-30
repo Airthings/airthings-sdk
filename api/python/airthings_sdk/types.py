@@ -59,7 +59,7 @@ class AirthingsDeviceType(str, Enum):
         if self == AirthingsDeviceType.AP_1:
             return "Renew"
         return "Unknown"
-    
+
 
 @dataclass
 class AirthingsSensor:
@@ -95,7 +95,11 @@ class AirthingsDevice:
     sensors: list[AirthingsSensor] = field(default_factory=list)
 
     @classmethod
-    def from_response(cls, device_response: DeviceResponse, sensors_response: SensorsResponse) -> "AirthingsDevice":
+    def from_response(
+        cls,
+        device_response: DeviceResponse,
+        sensors_response: SensorsResponse,
+    ) -> "AirthingsDevice":
         """Create an AirthingsDevice from a DeviceResponse and a SensorsResponse"""
 
         mapped = map(AirthingsSensor.from_response, sensors_response.sensors or [])
@@ -132,4 +136,8 @@ class AirthingsToken:
 
     def is_valid(self) -> bool:
         """Check if the token is valid."""
-        return self.value is not None and self._expires is not None and self._expires > (int(time.time()) + 20)
+        if self.value is None:
+            return False
+        if (expires := self._expires) is not None:
+            return expires > (int(time.time()) + 20)
+        return False

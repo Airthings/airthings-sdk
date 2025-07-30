@@ -18,11 +18,12 @@ async def main():
     airthings = Airthings(
         client_id=client_id,
         client_secret=client_secret,
-        is_metric=True
+        is_metric=True,
     )
 
     devices = await airthings.update_devices()
     print(devices)
+
 
 if __name__ == "__main__":
     asyncio.run(main())
