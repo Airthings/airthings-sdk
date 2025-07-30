@@ -4,6 +4,7 @@ version = "1.0.0"
 description = "A client library for accessing Airthings for Consumer"
 authors = []
 readme = "README.md"
+license = "MIT"
 packages = [
     {include = "airthings_api_client"},
     {include = "airthings_sdk"},
@@ -12,16 +13,16 @@ include = ["CHANGELOG.md", "api_client/py.typed"]
 
 
 [tool.poetry.dependencies]
-python = "^3.10"
-httpx = ">=0.28.0"
-attrs = ">=25.0.0"
-python-dateutil = ">=2.9.0,<3.0.0"
+python = "^3.11"
+httpx = "^0.28.1"
+attrs = ">=25.3.0"
+# python-dateutil = ">=2.9.0,<3.0.0"
 
 [tool.poetry.group.dev.dependencies]
-openapi-python-client = "^0.25.0"
+openapi-python-client = "^0.25.3"
 pylint = "^3.3.7"
 black = "^25.1.0"
-mypy = "^1.16.0"
+mypy = "^1.17.0"
 
 [build-system]
 requires = ["poetry-core>=2.1.3"]

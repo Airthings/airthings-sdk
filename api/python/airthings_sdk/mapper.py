@@ -193,10 +193,7 @@ class Airthings:
         if isinstance(payload, Error):
             raise ApiError(payload.message or "Unknown error")
 
-        if (
-            payload is None
-            or not isinstance(payload, GetMultipleSensorsResponse200)
-        ):
+        if payload is None or not isinstance(payload, GetMultipleSensorsResponse200):
             raise UnexpectedPayloadError(response.content)
 
         sensors = payload.results or []
