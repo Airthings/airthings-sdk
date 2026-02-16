@@ -1,0 +1,32 @@
+[tool.poetry]
+name = "airthings-sdk"
+version = "1.0.0"
+description = "A client library for accessing Airthings for Consumer API"
+authors = []
+readme = "README.md"
+packages = [
+    { include = "airthings_api_client" },
+    { include = "airthings_sdk" },
+]
+include = ["CHANGELOG.md", "airthings_api_client/py.typed"]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+httpx = ">=0.28.1,<0.29.0"
+attrs = ">=25,<26"
+python-dateutil = "^2.9.0"
+
+[tool.poetry.group.dev.dependencies]
+black = "^26.0.0"
+mypy = "^1.19.1"
+pylint = "^4.0.0"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = ["F", "I", "UP"]
