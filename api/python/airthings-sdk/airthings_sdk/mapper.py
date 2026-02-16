@@ -123,7 +123,7 @@ class Airthings:
 
         try:
             if should_refresh:
-                self._accounts = await self._fetch_all_accounts_ids()
+                self._accounts = await self._fetch_all_accounts()
                 self._accounts_fetched_at = int(time.time())
                 logger.info("Fetched %s accounts", len(self._accounts))
 
@@ -135,7 +135,7 @@ class Airthings:
             for account_id in self._accounts:
                 # Fetch sensors for each account
                 sensor_responses.extend(
-                    await self._fetch_all_device_sensors(
+                    await self._fetch_all_sensors(
                         account_id=account_id,
                         unit=self._unit,
                     )
@@ -167,7 +167,7 @@ class Airthings:
             )
             raise UnexpectedStatusError(e.status_code, e.content) from e
 
-    async def _fetch_all_accounts_ids(self) -> list[str]:
+    async def _fetch_all_accounts(self) -> list[str]:
         """Fetch accounts for the given client"""
 
         self.authenticate()
@@ -197,7 +197,7 @@ class Airthings:
 
         return payload.devices or []
 
-    async def _fetch_all_device_sensors(
+    async def _fetch_all_sensors(
         self,
         account_id: str,
         unit: GetMultipleSensorsUnit,
@@ -205,15 +205,14 @@ class Airthings:
     ) -> list[SensorsResponse]:
         """Fetch sensors for a given account"""
 
-        try:
-            response = await get_multiple_sensors.asyncio_detailed(
-                account_id=account_id,
-                client=self._api_client,
-                page_number=page_number,
-                unit=unit,
-            )
-        except LibUnexpectedStatus as e:
-            raise UnexpectedStatusError(e.status_code, e.content) from e
+        self.authenticate()
+
+        response = await get_multiple_sensors.asyncio_detailed(
+            account_id=account_id,
+            client=self._api_client,
+            page_number=page_number,
+            unit=unit,
+        )
 
         payload = response.parsed
 
@@ -228,7 +227,7 @@ class Airthings:
         if payload.has_next is not True:
             return sensors
 
-        return sensors + await self._fetch_all_device_sensors(
+        return sensors + await self._fetch_all_sensors(
             account_id=account_id,
             page_number=page_number + 1,
             unit=unit,
