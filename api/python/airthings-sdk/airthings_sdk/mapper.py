@@ -35,6 +35,7 @@ class Airthings:
     _access_token: AirthingsToken = AirthingsToken()
 
     _accounts: list[str] = []
+    _accounts_fetched_at: Optional[int] = None
     _cache_timestamp: Optional[int] = None
 
     _auth_api_client: Client = Client(
@@ -59,7 +60,12 @@ class Airthings:
         """Init Airthings data handler."""
         self._client_id = client_id
         self._client_secret = client_secret
-        self._unit = GetMultipleSensorsUnit.METRIC if is_metric else GetMultipleSensorsUnit.IMPERIAL
+        self._unit = (
+            GetMultipleSensorsUnit.METRIC
+            if is_metric
+            else GetMultipleSensorsUnit.IMPERIAL
+        )
+        self._accounts_fetched_at = None
 
         if web_session:
             self._auth_api_client.set_async_httpx_client(web_session)
@@ -108,15 +114,17 @@ class Airthings:
         }
         logger.info("Updated devices cache with %s devices.", len(self.devices))
 
-    async def update_data(self, invalidate_cache: bool = False) -> dict[str, AirthingsDevice]:
+    async def update_data(
+        self, invalidate_cache: bool = False
+    ) -> dict[str, AirthingsDevice]:
         """Update devices and sensors from Airthings API. Return a dict of devices."""
         logger.info("Fetching devices and sensors from Airthings API.")
 
         should_refresh = (
-            invalidate_cache or
-            not self.devices or
-            self._accounts_fetched_at is None or
-            self._accounts_fetched_at + CACHE_TIMEOUT < int(time.time())
+            invalidate_cache
+            or not self.devices
+            or self._accounts_fetched_at is None
+            or self._accounts_fetched_at + CACHE_TIMEOUT < int(time.time())
         )
 
         fetched_devices = False
@@ -146,7 +154,7 @@ class Airthings:
                 if not isinstance(device_serial, str):
                     logger.info("Invalid serial number: %s", device_serial)
                     continue
-                elif device_serial not in self.devices:
+                if device_serial not in self.devices:
                     if not fetched_devices:
                         await self._update_devices_cache()
                         fetched_devices = True
@@ -154,7 +162,11 @@ class Airthings:
 
             for device in self.devices.values():
                 sensors_response = next(
-                    (s for s in sensor_responses if s.serial_number == device.serial_number),
+                    (
+                        s
+                        for s in sensor_responses
+                        if s.serial_number == device.serial_number
+                    ),
                     None,
                 )
                 if sensors_response:
@@ -178,7 +190,11 @@ class Airthings:
         if payload is None:
             raise UnexpectedPayloadError(response.content)
 
-        return [account.id for account in (payload.accounts or []) if isinstance(account.id, str)]
+        return [
+            account.id
+            for account in (payload.accounts or [])
+            if isinstance(account.id, str)
+        ]
 
     async def _fetch_all_devices(self, account_id: str) -> list[DeviceResponse]:
         """Fetch devices for a given account"""

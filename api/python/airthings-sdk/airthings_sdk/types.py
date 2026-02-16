@@ -37,38 +37,26 @@ class AirthingsDeviceType(str, Enum):
         """Get device type from raw value."""
         for device_type in cls:
             if device_type.value == value:
-                device_type.raw_value = value
                 return device_type
-        unknown_device = AirthingsDeviceType.UNKNOWN
-        unknown_device.raw_value = value
         _LOGGER.debug("Unknown device type: %s", value)
-        return unknown_device
+        return AirthingsDeviceType.UNKNOWN
 
     @property
     def product_name(self) -> str:
-        if self == AirthingsDeviceType.AP_1:
-            return "Renew"
-        if self == AirthingsDeviceType.CORENTIUM_HOME_2:
-            return "Corentium Home 2"
-        if self == AirthingsDeviceType.HUB:
-            return "Hub"
-        if self == AirthingsDeviceType.VIEW_PLUS:
-            return "View Plus"
-        if self == AirthingsDeviceType.VIEW_POLLUTION:
-            return "View Pollution"
-        if self == AirthingsDeviceType.VIEW_RADON:
-            return "View Radon"
-        if self == AirthingsDeviceType.WAVE:
-            return "Wave Gen 1"
-        if self == AirthingsDeviceType.WAVE_ENHANCE:
-            return "Wave Enhance"
-        if self == AirthingsDeviceType.WAVE_MINI:
-            return "Wave Mini"
-        if self == AirthingsDeviceType.WAVE_PLUS:
-            return "Wave Plus"
-        if self == AirthingsDeviceType.WAVE_RADON:
-            return "Wave Radon"
-        return "Unknown"
+        """Return a display product name for this device type."""
+        return {
+            AirthingsDeviceType.AP_1: "Renew",
+            AirthingsDeviceType.CORENTIUM_HOME_2: "Corentium Home 2",
+            AirthingsDeviceType.HUB: "Hub",
+            AirthingsDeviceType.VIEW_PLUS: "View Plus",
+            AirthingsDeviceType.VIEW_POLLUTION: "View Pollution",
+            AirthingsDeviceType.VIEW_RADON: "View Radon",
+            AirthingsDeviceType.WAVE: "Wave Gen 1",
+            AirthingsDeviceType.WAVE_ENHANCE: "Wave Enhance",
+            AirthingsDeviceType.WAVE_MINI: "Wave Mini",
+            AirthingsDeviceType.WAVE_PLUS: "Wave Plus",
+            AirthingsDeviceType.WAVE_RADON: "Wave Radon",
+        }.get(self, "Unknown")
 
 
 @dataclass
