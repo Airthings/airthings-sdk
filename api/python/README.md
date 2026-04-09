@@ -6,7 +6,7 @@ API SDK for Airthings consumer products.
 
 Prerequisites:
 
-- [Python](https://www.python.org/downloads/) with version 3.11 that is required by Home Assistant ([docs](https://developers.home-assistant.io/docs/development_environment?_highlight=python&_highlight=versi#manual-environment) or [reference](https://github.com/home-assistant/architecture/blob/master/adr/0002-minimum-supported-python-version.md))
+- [Python](https://www.python.org/downloads/) 3.10+
 - [Poetry](https://python-poetry.org/docs/#installation)
 
 Install dependencies:
