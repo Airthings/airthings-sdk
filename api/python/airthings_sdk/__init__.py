@@ -1,4 +1,4 @@
-""" A client library for accessing Airthings for Consumer API """
+"""A client library for accessing Airthings for Consumer API"""
 
 from .mapper import Airthings
 from .types import AirthingsDevice, AirthingsSensor
