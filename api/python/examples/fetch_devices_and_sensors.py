@@ -1,4 +1,4 @@
-""" Example of fetching devices and sensors from Airthings API. """
+"""Example of fetching devices and sensors from Airthings API."""
 
 import sys
 

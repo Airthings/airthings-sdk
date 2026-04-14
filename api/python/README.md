@@ -4,15 +4,33 @@
 
 API SDK for Airthings consumer products.
 
-Prerequisites:
+## Prerequisites
 
-- [Python](https://www.python.org/downloads/) with version 3.11 that is required by Home Assistant ([docs](https://developers.home-assistant.io/docs/development_environment?_highlight=python&_highlight=versi#manual-environment) or [reference](https://github.com/home-assistant/architecture/blob/master/adr/0002-minimum-supported-python-version.md))
-- [Poetry](https://python-poetry.org/docs/#installation)
+- [Python](https://www.python.org/downloads/) 3.10+
+- [Poetry](https://python-poetry.org/docs/#installation) 2.x
 
-Install dependencies:
+## Getting started
 
 ```bash
-poetry install
+make install
+```
+
+## Available commands
+
+| Command | Description |
+|---------|-------------|
+| `make install` | Install dependencies |
+| `make generate` | Regenerate API client from `openapi.yaml` |
+| `make format` | Format code with black |
+| `make lint` | Run black, pylint, and mypy |
+| `make check` | Format + lint |
+
+## Regenerating the API client
+
+The `airthings_api_client/` package is auto-generated from `openapi.yaml` using `openapi-python-client`. Do not edit it manually.
+
+```bash
+make generate
 ```
 
 [logo]: https://upload.wikimedia.org/wikipedia/commons/d/d1/Airthings_logo.svg
