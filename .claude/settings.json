@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "attribution": {
+    "commit": "Co-Authored-By: Claude <noreply@anthropic.com>",
+    "pr": "🤖 Generated with [Claude Code](https://claude.com/claude-code)",
+    "sessionUrl": false
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "^(Read|Edit|Write|MultiEdit|NotebookEdit|Grep|Bash)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "J=\"$HOME/.claude/plugins/installed_plugins.json\"; p=$(jq -r --arg c \"$PWD\" '(.plugins[\"baseline@airthings\"]//[]) as $e | ((($e|map(select(.projectPath==$c)))+$e)[0].installPath) // empty' \"$J\" 2>/dev/null); [ -n \"$p\" ] && [ -x \"$p/scripts/guard.sh\" ] && exec \"$p/scripts/guard.sh\"; exit 0",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "J=\"$HOME/.claude/plugins/installed_plugins.json\"; jq -e --arg c \"$PWD\" '(.plugins[\"baseline@airthings\"]//[]) | any(.projectPath==$c)' \"$J\" >/dev/null 2>&1 || claude plugin install baseline@airthings -s project -y >/dev/null 2>&1; true",
+            "timeout": 60
+          },
+          {
+            "type": "command",
+            "command": "J=\"$HOME/.claude/plugins/installed_plugins.json\"; p=$(jq -r --arg c \"$PWD\" '(.plugins[\"baseline@airthings\"]//[]) as $e | ((($e|map(select(.projectPath==$c)))+$e)[0].installPath) // empty' \"$J\" 2>/dev/null); [ -n \"$p\" ] && [ -x \"$p/scripts/context.sh\" ] && exec \"$p/scripts/context.sh\"; exit 0",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  },
+  "enabledPlugins": {
+    "baseline@airthings": true
+  },
+  "extraKnownMarketplaces": {
+    "airthings": {
+      "source": {
+        "source": "github",
+        "repo": "Airthings/claude"
+      },
+      "autoUpdate": true
+    }
+  }
+}
